@@ -24,8 +24,8 @@ import {
 const measurements = [
     {
         icon: ArrowLeftRight,
-        name: "Symmetry",
-        description: "Left/right balance in your gait pattern",
+        name: "Symmetry & Phases",
+        description: "How evenly and smoothly you walk",
     },
     {
         icon: Activity,
@@ -75,8 +75,8 @@ const userFeatures = [
 const clinicianFeatures = [
     {
         icon: FileText,
-        title: "One-Page Report",
-        description: "Everything relevant on a single page",
+        title: "Deep Report",
+        description: "Everything relevant on a single file",
     },
     {
         icon: TrendingUp,
@@ -126,7 +126,7 @@ const Product = () => {
                             What <span className="text-gradient-primary">NMove</span> delivers
                         </h1>
                         <p className="text-xl text-muted-foreground">
-                            Clear movement insights for patients. Fast-review summaries for clinicians.
+                            More than just steps.
                         </p>
                     </div>
                 </div>

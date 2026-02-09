@@ -34,9 +34,7 @@ export function Navbar() {
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-            <div className="w-4 h-4 rounded-full bg-primary animate-pulse-slow" />
-          </div>
+          <img src="/icon.png" alt="NMove" className="w-8 h-8 rounded-sm object-contain" />
           <span className="font-semibold text-lg text-foreground">NMove</span>
         </Link>
 
@@ -68,8 +66,8 @@ export function Navbar() {
                 key={link.href}
                 to={link.href!}
                 className={`text-sm transition-colors ${isActive(link.href!)
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
                   }`}
               >
                 {link.name}
@@ -122,8 +120,8 @@ export function Navbar() {
                         key={child.href}
                         to={child.href}
                         className={`block text-sm ${isActive(child.href)
-                            ? "text-primary"
-                            : "text-muted-foreground hover:text-foreground"
+                          ? "text-primary"
+                          : "text-muted-foreground hover:text-foreground"
                           }`}
                         onClick={() => setMobileMenuOpen(false)}
                       >
@@ -137,8 +135,8 @@ export function Navbar() {
                   key={link.href}
                   to={link.href!}
                   className={`block text-sm ${isActive(link.href!)
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                     }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >

@@ -14,7 +14,7 @@ const faqs = [
     },
     {
         question: "How does NMove help with my appointments?",
-        answer: "NMove provides a simple summary of your movement trends between visits. Your clinician can quickly review this context to have more informed conversations about your progress.",
+        answer: "NMove provides a deep report of your movement trends between visits. Your clinician can review this context to have more informed conversations about your progress.",
     },
     {
         question: "What do I need to use NMove?",
@@ -22,7 +22,7 @@ const faqs = [
     },
     {
         question: "How accurate is the data?",
-        answer: "NMove captures movement patterns using research-grade sensors. While not intended for clinical diagnosis, the trends are reliable enough to support meaningful conversations with your care team.",
+        answer: "Gait-related metrics are designed to be directionally reliable, meaning they are most accurate for tracking changes and trends over time",
     },
 ];
 

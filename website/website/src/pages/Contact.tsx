@@ -17,11 +17,40 @@ const Contact = () => {
         message: "",
     });
     const [submitted, setSubmitted] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState("");
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // TODO: Connect to backend API
-        setSubmitted(true);
+        setIsSubmitting(true);
+        setError("");
+
+        try {
+            const response = await fetch("http://localhost:8000/api/contact", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name: formData.name,
+                    email: formData.email,
+                    form_type: formType,
+                    message: formData.message,
+                    organization: formData.organization,
+                }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || "Failed to submit form");
+            }
+
+            setSubmitted(true);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Failed to submit. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -139,8 +168,18 @@ const Contact = () => {
                                             <a href="/terms" className="text-primary hover:underline">Terms of Service</a>.
                                         </div>
 
-                                        <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
-                                            {formType === "patient" ? "Join Waitlist" : "Request Sample Report"}
+                                        {error && (
+                                            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/50 text-red-500 text-sm">
+                                                {error}
+                                            </div>
+                                        )}
+
+                                        <Button
+                                            type="submit"
+                                            className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                                            disabled={isSubmitting}
+                                        >
+                                            {isSubmitting ? "Sending..." : (formType === "patient" ? "Join Waitlist" : "Request Sample Report")}
                                             <ArrowRight className="ml-2 h-4 w-4" />
                                         </Button>
                                     </div>
@@ -159,8 +198,8 @@ const Contact = () => {
                                         </div>
                                         <div>
                                             <h3 className="font-semibold mb-1">Email</h3>
-                                            <a href="mailto:hello@nmove.co" className="text-muted-foreground hover:text-primary transition-colors">
-                                                hello@nmove.co
+                                            <a href="mailto:nmove.co@gmail.com" className="text-muted-foreground hover:text-primary transition-colors">
+                                                nmove.co@gmail.com
                                             </a>
                                         </div>
                                     </div>
@@ -170,7 +209,7 @@ const Contact = () => {
                                         </div>
                                         <div>
                                             <h3 className="font-semibold mb-1">Location</h3>
-                                            <p className="text-muted-foreground">United States</p>
+                                            <p className="text-muted-foreground">Astana, Kazakhstan</p>
                                         </div>
                                     </div>
                                 </div>

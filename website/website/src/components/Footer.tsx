@@ -28,16 +28,14 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                <div className="w-4 h-4 rounded-full bg-primary" />
-              </div>
+              <img src="/icon.png" alt="NMove" className="w-8 h-8 rounded-sm object-contain" />
               <span className="font-semibold text-lg text-foreground">NMove</span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs mb-4">
-              Gait trends between visits—made clear. Helping patients track walking patterns and share clinician-ready summaries.
+              More than just steps. Gait trends between visits—made clear. Helping patients track walking patterns and share clinician-ready reports.
             </p>
             <p className="text-sm text-muted-foreground">
-              📍 United States
+              📍 Astana, Kazakhstan
             </p>
           </div>
 
@@ -97,7 +95,7 @@ export function Footer() {
         <div className="pt-8 border-t border-border">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">
-              © {new Date().getFullYear()} NMove. All rights reserved.
+              {new Date().getFullYear()} NMove.
             </p>
             <p className="text-xs text-muted-foreground">
               For general wellness purposes only.

@@ -46,7 +46,6 @@ const whatItDoes = [
     "Tracks your gait patterns during everyday activities",
     "Shows trends over days, weeks, and months",
     "Highlights meaningful changes worth discussing",
-    "Creates one-page summaries for your appointments",
     "Lets you add notes about pain, activities, and context",
 ];
 
@@ -77,7 +76,7 @@ const faqs = [
     },
     {
         question: "Can I share my data with my doctor?",
-        answer: "Yes! You can generate a one-page summary report anytime and share it via email or print. The report is designed to be reviewed quickly, so it won't take up your doctor's valuable time.",
+        answer: "Yes! You can generate a One-File Report report anytime and share it via email or print. The report is designed to be reviewed quickly, so it won't take up your doctor's valuable time.",
     },
     {
         question: "What if I have multiple conditions affecting my gait?",
@@ -85,7 +84,7 @@ const faqs = [
     },
     {
         question: "Is there a mobile app?",
-        answer: "Yes, NMove includes a smartphone app for iOS and Android. The app displays your trends, lets you add notes, and generates reports for your appointments.",
+        answer: "Yes, NMove includes a smartphone app for iOS and Android."
     },
     {
         question: "What happens to my data if I cancel?",

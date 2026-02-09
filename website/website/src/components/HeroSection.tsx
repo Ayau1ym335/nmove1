@@ -29,7 +29,7 @@ export function HeroSection() {
             >
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted border border-border text-sm text-muted-foreground">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                Movement tracking made simple
+                More than just steps
               </span>
             </div>
 
@@ -46,7 +46,7 @@ export function HeroSection() {
               style={{ animationDelay: '0.3s' }}
             >
               NMove helps patients track walking patterns over time and share
-              clinician-ready summaries. Simple insights for better conversations
+              clinician-ready reports. Simple insights for better conversations
               with your care team.
             </p>
 

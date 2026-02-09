@@ -1,4 +1,5 @@
 from fastapi import Depends, HTTPException, status, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone
 from typing import Optional
@@ -6,8 +7,25 @@ from pydantic import BaseModel
 
 from data.tables import get_db, WalkingSessions, ActivityType
 from auth import get_current_user, Users
+from routers import contact, payment
+from config import get_settings
+
+settings = get_settings()
 
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers
+app.include_router(contact.router)
+app.include_router(payment.router)
 
 class SessionStartRequest(BaseModel):
     is_baseline: bool = False

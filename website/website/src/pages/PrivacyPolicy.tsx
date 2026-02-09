@@ -10,7 +10,7 @@ const PrivacyPolicy = () => {
                 <div className="container mx-auto px-6">
                     <div className="max-w-3xl mx-auto">
                         <h1 className="text-4xl font-semibold mb-4">Privacy Policy</h1>
-                        <p className="text-muted-foreground mb-8">Last updated: February 2025</p>
+                        <p className="text-muted-foreground mb-8">Last updated: February 2026</p>
 
                         <div className="prose prose-invert max-w-none space-y-8">
                             <section>
@@ -80,16 +80,6 @@ const PrivacyPolicy = () => {
                             </section>
 
                             <section>
-                                <h2 className="text-2xl font-semibold mb-4">Data Storage & Security</h2>
-                                <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
-                                    <li>Data is encrypted in transit (TLS) and at rest (AES-256)</li>
-                                    <li>We use secure cloud infrastructure with access controls</li>
-                                    <li>Movement data is stored in the United States</li>
-                                    <li>We retain data for as long as your account is active, plus 30 days after deletion request</li>
-                                </ul>
-                            </section>
-
-                            <section>
                                 <h2 className="text-2xl font-semibold mb-4">Your Rights</h2>
                                 <p className="text-muted-foreground mb-4">You have the right to:</p>
                                 <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
@@ -98,27 +88,16 @@ const PrivacyPolicy = () => {
                                     <li>Correct inaccurate information</li>
                                     <li>Delete your account and associated data</li>
                                     <li>Opt out of marketing communications</li>
-                                    <li>Withdraw consent for optional data uses</li>
                                 </ul>
                                 <p className="text-muted-foreground mt-4">
-                                    To exercise these rights, contact us at privacy@nmove.co.
-                                </p>
-                            </section>
-
-                            <section>
-                                <h2 className="text-2xl font-semibold mb-4">Children's Privacy</h2>
-                                <p className="text-muted-foreground">
-                                    Our Services are not intended for children under 18. We do not knowingly
-                                    collect information from children. If you believe we have collected information
-                                    from a child, please contact us immediately.
+                                    To exercise these rights, contact us at nmove.co@gmail.com.
                                 </p>
                             </section>
 
                             <section>
                                 <h2 className="text-2xl font-semibold mb-4">Changes to This Policy</h2>
                                 <p className="text-muted-foreground">
-                                    We may update this Privacy Policy from time to time. We will notify you of
-                                    material changes via email or prominent notice in our app. Your continued
+                                    We may update this Privacy Policy from time to time. Your continued
                                     use after changes constitutes acceptance of the updated policy.
                                 </p>
                             </section>
@@ -127,8 +106,8 @@ const PrivacyPolicy = () => {
                                 <h2 className="text-2xl font-semibold mb-4">Contact Us</h2>
                                 <p className="text-muted-foreground">
                                     For privacy-related questions or requests:<br />
-                                    Email: privacy@nmove.co<br />
-                                    Address: United States
+                                    Email: nmove.co@gmail.com<br />
+                                    Address: Astana, Kazakhstan
                                 </p>
                             </section>
                         </div>

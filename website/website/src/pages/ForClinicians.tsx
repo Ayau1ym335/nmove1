@@ -21,7 +21,7 @@ import {
 const whatYouReceive = [
     {
         icon: FileText,
-        title: "One-Page Summary",
+        title: "One-File Report",
         description: "Key metrics and trends condensed for 30-60 second review",
     },
     {
@@ -94,7 +94,7 @@ const ForClinicians = () => {
                     <div className="text-center mb-12">
                         <h2 className="text-3xl font-semibold mb-4">What you'll receive</h2>
                         <p className="text-lg text-muted-foreground">
-                            A patient-generated summary designed for quick clinical review
+                            A patient-generated report designed for quick clinical review
                         </p>
                     </div>
 
@@ -122,7 +122,7 @@ const ForClinicians = () => {
                         <div>
                             <h2 className="text-3xl font-semibold mb-6">Sample clinician report</h2>
                             <p className="text-muted-foreground mb-6 leading-relaxed">
-                                Our one-page report gives you the context you need in 30-60 seconds.
+                                Our report gives you the context you need.
                                 Key metrics, trend visualization, and patient-logged events—all in one view.
                             </p>
                             <div className="space-y-4">
@@ -235,39 +235,6 @@ const ForClinicians = () => {
                                     </li>
                                 ))}
                             </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Clinical Boundaries */}
-            <section className="py-16">
-                <div className="container mx-auto px-6">
-                    <div className="max-w-3xl mx-auto">
-                        <div className="p-8 rounded-2xl bg-gradient-to-br from-primary/5 to-secondary/5 border border-primary/20">
-                            <div className="flex items-start gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                                    <Shield className="h-6 w-6 text-primary" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-semibold mb-4">Clinical boundaries</h3>
-                                    <div className="space-y-3 text-muted-foreground leading-relaxed">
-                                        <p>
-                                            <strong className="text-foreground">NMove is not a medical device.</strong> It provides
-                                            trend data for general wellness purposes only.
-                                        </p>
-                                        <p>
-                                            The information should be considered advisory context, not clinical data.
-                                            All clinical decisions remain with the treating provider.
-                                        </p>
-                                        <p>
-                                            Patients are clearly informed that NMove does not diagnose, treat, or
-                                            prescribe, and that they should always consult their healthcare provider
-                                            for medical advice.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>

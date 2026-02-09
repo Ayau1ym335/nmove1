@@ -7,8 +7,8 @@ import { Target, Users, Calendar, ArrowRight, Mail, MapPin } from "lucide-react"
 const milestones = [
     { year: "2024", event: "Concept development and initial research" },
     { year: "2024", event: "Prototype sensor development" },
-    { year: "2025", event: "Beta program launch" },
-    { year: "2025", event: "Public launch (anticipated)" },
+    { year: "2026", event: "Beta program launch" },
+    { year: "2026", event: "Public launch (anticipated)" },
 ];
 
 const About = () => {
@@ -21,7 +21,7 @@ const About = () => {
                 <div className="container mx-auto px-6">
                     <div className="max-w-3xl mx-auto text-center">
                         <h1 className="text-4xl md:text-5xl font-semibold mb-6">
-                            Make movement progress <span className="text-gradient-primary">visible</span>
+                            More than just <span className="text-gradient-primary">steps</span>
                         </h1>
                         <p className="text-xl text-muted-foreground">
                             We're building tools to bridge the gap between clinical visits,
@@ -42,13 +42,13 @@ const About = () => {
                             <div>
                                 <h2 className="text-2xl font-semibold mb-4">Our Mission</h2>
                                 <p className="text-lg text-muted-foreground leading-relaxed">
-                                    Too much happens between doctor visits that never gets captured.
-                                    Patients struggle to remember details. Clinicians lack objective context.
+                                    To empower individuals on their path to recovery by transforming the way
+                                    gait rehabilitation is managed and monitored.
                                 </p>
                                 <p className="text-lg text-muted-foreground leading-relaxed mt-4">
-                                    NMove exists to make movement progress visible—giving patients simple
-                                    tools to track their journey and clinicians the quick-review summaries
-                                    they need to provide better care.
+                                    We aim to enhance the quality of life for people with mobility challenges,
+                                    ensuring that every step they take is a step toward a healthier, more active,
+                                    and independent future.
                                 </p>
                             </div>
                         </div>
@@ -68,52 +68,81 @@ const About = () => {
                                 <h2 className="text-2xl font-semibold mb-4">Our Team</h2>
                                 <p className="text-muted-foreground leading-relaxed">
                                     We're a small team passionate about using technology to improve
-                                    healthcare experiences. Our backgrounds span biomedical engineering,
-                                    software development, and clinical research.
+                                    healthcare experiences.
                                 </p>
                             </div>
                         </div>
-
-                        {/* Team placeholder */}
-                        <div className="grid md:grid-cols-3 gap-6">
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="p-6 rounded-xl bg-card border border-border text-center">
-                                    <div className="w-20 h-20 rounded-full bg-muted mx-auto mb-4 flex items-center justify-center">
-                                        <Users className="h-8 w-8 text-muted-foreground" />
-                                    </div>
-                                    <p className="text-sm text-muted-foreground">Team Member</p>
-                                    <p className="text-xs text-muted-foreground/60">Coming soon</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Timeline */}
-            <section className="py-16 bg-muted/30">
-                <div className="container mx-auto px-6">
-                    <div className="max-w-3xl mx-auto">
-                        <div className="flex items-start gap-6 mb-12">
-                            <div className="w-14 h-14 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-                                <Calendar className="h-7 w-7 text-accent" />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-semibold mb-4">Our Journey</h2>
-                                <p className="text-muted-foreground leading-relaxed">
-                                    From concept to product—here's where we are on the path to launch.
+                        {/* Team Members */}
+                        {/* Team Members */}
+                        <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-x-8 gap-y-10 mt-12 mb-12">
+                            {/* Profile 1 */}
+                            <div className="flex flex-col items-center text-center p-6 bg-card rounded-xl border border-border shadow-sm">
+                                <img
+                                    src="/public/ayau.jpeg"
+                                    alt="Ayaulym Balginbaeva"
+                                    className="w-24 h-24 rounded-full object-cover mb-4"
+                                />
+                                <h3 className="text-xl font-semibold text-foreground mb-1">
+                                    Ayaulym Balginbaeva
+                                </h3>
+                                <p className="text-sm font-medium text-primary mb-3">
+                                    Backend & AI
+                                </p>
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                    Designs backend architecture and develops AI logic.
                                 </p>
                             </div>
-                        </div>
 
-                        <div className="space-y-4 pl-8 border-l-2 border-border">
-                            {milestones.map((milestone, index) => (
-                                <div key={index} className="relative pl-8">
-                                    <div className="absolute -left-[25px] w-4 h-4 rounded-full bg-primary border-4 border-background" />
-                                    <span className="text-sm text-primary font-medium">{milestone.year}</span>
-                                    <p className="text-muted-foreground">{milestone.event}</p>
-                                </div>
-                            ))}
+                            <div className="flex flex-col items-center text-center p-6 bg-card rounded-xl border border-border shadow-sm">
+                                <img
+                                    src="/public/dariya.jpeg"
+                                    alt="Team Member 2"
+                                    className="w-24 h-24 rounded-full object-cover mb-4"
+                                />
+                                <h3 className="text-xl font-semibold text-foreground mb-1">
+                                    Dariya Bekbolat
+                                </h3>
+                                <p className="text-sm font-medium text-primary mb-3">
+                                    Frontend & Business Advisor 
+                                </p>
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                    Leads UI development and aligns product decisions with business goals.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col items-center text-center p-6 bg-card rounded-xl border border-border shadow-sm">
+                                <img
+                                    src="/public/aigerym.jpeg"
+                                    alt="Team Member 3"
+                                    className="w-24 h-24 rounded-full object-cover mb-4"
+                                />
+                                <h3 className="text-xl font-semibold text-foreground mb-1">
+                                    Aigerym Qumarbek
+                                </h3>
+                                <p className="text-sm font-medium text-primary mb-3">
+                                    Hardware Lead 
+                                </p>
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                    Designs, integrates, and validates hardware components of the system.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col items-center text-center p-6 bg-card rounded-xl border border-border shadow-sm">
+                                <img
+                                    src="/team/member4.jpg"
+                                    alt="Team Member 4"
+                                    className="w-24 h-24 rounded-full object-cover mb-4"
+                                />
+                                <h3 className="text-xl font-semibold text-foreground mb-1">
+                                    Nuraiym Qabdulla
+                                </h3>
+                                <p className="text-sm font-medium text-primary mb-3">
+                                    Medical Advisor & Designer
+                                </p>
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                    Ensures clinical validity while shaping medically grounded UX and visuals.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -131,8 +160,8 @@ const About = () => {
                                 </div>
                                 <div>
                                     <h3 className="font-semibold mb-1">Email</h3>
-                                    <a href="mailto:hello@nmove.co" className="text-muted-foreground hover:text-primary transition-colors">
-                                        hello@nmove.co
+                                    <a href="mailto:nmove.co@gmail.com" className="text-muted-foreground hover:text-primary transition-colors">
+                                        nmove.co@gmail.com
                                     </a>
                                 </div>
                             </div>
@@ -142,7 +171,7 @@ const About = () => {
                                 </div>
                                 <div>
                                     <h3 className="font-semibold mb-1">Location</h3>
-                                    <p className="text-muted-foreground">United States</p>
+                                    <p className="text-muted-foreground">Astana, Kazakhstan</p>
                                 </div>
                             </div>
                         </div>

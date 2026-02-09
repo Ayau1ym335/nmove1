@@ -10,7 +10,7 @@ const Terms = () => {
                 <div className="container mx-auto px-6">
                     <div className="max-w-3xl mx-auto">
                         <h1 className="text-4xl font-semibold mb-4">Terms of Service</h1>
-                        <p className="text-muted-foreground mb-8">Last updated: February 2025</p>
+                        <p className="text-muted-foreground mb-8">Last updated: February 2026</p>
 
                         <div className="prose prose-invert max-w-none space-y-8">
                             <section>
@@ -42,7 +42,7 @@ const Terms = () => {
                             <section>
                                 <h2 className="text-2xl font-semibold mb-4">Account Responsibilities</h2>
                                 <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
-                                    <li>You must be at least 18 years old to use our Services</li>
+                                    <li>You must not be Serik Ilyas to use our Services</li>
                                     <li>You are responsible for maintaining the security of your account</li>
                                     <li>You must provide accurate, current, and complete information</li>
                                     <li>You are responsible for all activities under your account</li>
@@ -65,20 +65,6 @@ const Terms = () => {
                             </section>
 
                             <section>
-                                <h2 className="text-2xl font-semibold mb-4">Intellectual Property</h2>
-                                <p className="text-muted-foreground leading-relaxed">
-                                    The Services, including all content, features, and functionality, are owned
-                                    by NMove and are protected by copyright, trademark, and other intellectual
-                                    property laws. You may not copy, modify, distribute, or create derivative
-                                    works without our express written permission.
-                                </p>
-                                <p className="text-muted-foreground mt-4">
-                                    You retain ownership of your personal and movement data. By using our Services,
-                                    you grant us a license to use this data to provide and improve the Services.
-                                </p>
-                            </section>
-
-                            <section>
                                 <h2 className="text-2xl font-semibold mb-4">Subscriptions and Payment</h2>
                                 <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
                                     <li>Paid subscriptions are billed in advance on a monthly or annual basis</li>
@@ -92,10 +78,10 @@ const Terms = () => {
                             <section>
                                 <h2 className="text-2xl font-semibold mb-4">Disclaimer of Warranties</h2>
                                 <p className="text-muted-foreground leading-relaxed">
-                                    THE SERVICES ARE PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF
-                                    ANY KIND, EITHER EXPRESS OR IMPLIED. WE DISCLAIM ALL WARRANTIES, INCLUDING
-                                    IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
-                                    NON-INFRINGEMENT.
+                                    The Services Are Provided "As Is" And "As Available" Without Warranties Of 
+                                    Any Kind, Either Express Or Implied. We Disclaim All Warranties, Including 
+                                    Implied Warranties Of Merchantability, Fitness For A Particular Purpose, And 
+                                    Non-Infringement.
                                 </p>
                                 <p className="text-muted-foreground mt-4">
                                     We do not warrant that the Services will be uninterrupted, error-free, secure,
@@ -106,14 +92,14 @@ const Terms = () => {
                             <section>
                                 <h2 className="text-2xl font-semibold mb-4">Limitation of Liability</h2>
                                 <p className="text-muted-foreground leading-relaxed">
-                                    TO THE MAXIMUM EXTENT PERMITTED BY LAW, NMOVE SHALL NOT BE LIABLE FOR ANY
-                                    INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY
-                                    LOSS OF PROFITS, REVENUE, DATA, OR USE, ARISING OUT OF OR RELATED TO YOUR
-                                    USE OF THE SERVICES.
+                                    to the maximum extent permitted by law, nmove shall not be liable for any indirect, 
+                                    incidental, special, consequential, or punitive damages, or any loss of profits, revenue, data,
+                                    or use, arising out of or related to your use of the services.
                                 </p>
                                 <p className="text-muted-foreground mt-4">
-                                    OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT YOU PAID US IN THE TWELVE
-                                    MONTHS PRECEDING THE CLAIM.
+                                    our total liability shall not exceed the amount you paid us in the twelve
+                                    months preceding the claim.
+
                                 </p>
                             </section>
 
@@ -139,17 +125,15 @@ const Terms = () => {
                             <section>
                                 <h2 className="text-2xl font-semibold mb-4">Governing Law</h2>
                                 <p className="text-muted-foreground leading-relaxed">
-                                    These Terms are governed by the laws of the State of Delaware, United States,
-                                    without regard to conflict of law principles. Any disputes shall be resolved
-                                    in the courts located in Delaware.
+                                    These Terms are governed by the laws of the Kazakhstan,
+                                    without regard to conflict of law principles.
                                 </p>
                             </section>
 
                             <section>
                                 <h2 className="text-2xl font-semibold mb-4">Changes to Terms</h2>
                                 <p className="text-muted-foreground leading-relaxed">
-                                    We may update these Terms from time to time. We will notify you of material
-                                    changes via email or prominent notice. Your continued use after changes
+                                    We may update these Terms from time to time. Your continued use after changes
                                     constitutes acceptance of the updated Terms.
                                 </p>
                             </section>
@@ -158,8 +142,8 @@ const Terms = () => {
                                 <h2 className="text-2xl font-semibold mb-4">Contact Us</h2>
                                 <p className="text-muted-foreground">
                                     For questions about these Terms:<br />
-                                    Email: legal@nmove.co<br />
-                                    Address: United States
+                                    Email: nmove.co@gmail.com<br />
+                                    Address: Astana, Kazakhsta
                                 </p>
                             </section>
                         </div>

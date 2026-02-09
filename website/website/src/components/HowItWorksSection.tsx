@@ -23,7 +23,7 @@ const steps = [
     icon: Share2,
     step: "4",
     title: "Share Report",
-    description: "Generate a one-page summary for your clinician before your next visit.",
+    description: "Generate a deep report for your clinician before your next visit.",
   },
 ];
 
@@ -36,7 +36,7 @@ export function HowItWorksSection() {
             How it <span className="text-gradient-primary">works</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Four simple steps to better movement insights
+            4 simple steps to better movement insights
           </p>
         </div>
 

@@ -17,11 +17,16 @@ class UserRegister(UserBase):
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=100)
     city: str
-    date_of_birth: datetime 
+    age: int
     gender: GenderEnum 
     weight: float = Field(..., ge=20, le=200)
     height: float = Field(..., ge=80, le=210)
     have_injury: bool = Field(default=False)
+    have_banomaly: bool = Field(...)
+    banomaly: bool = Field(...)
+
+    nationality: str = Field(...)
+
     shoe_size: float = Field(..., ge=10, le=50)
     leg_length: float = Field(..., ge=10, le=150)
     dominant_leg: SideEnum = Field(default=SideEnum.RIGHT)

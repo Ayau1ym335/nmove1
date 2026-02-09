@@ -16,7 +16,7 @@ const MedicalDisclaimer = () => {
                             </div>
                             <h1 className="text-4xl font-semibold">Medical Disclaimer</h1>
                         </div>
-                        <p className="text-muted-foreground mb-8">Last updated: February 2025</p>
+                        <p className="text-muted-foreground mb-8">Last updated: February 2026</p>
 
                         <div className="prose prose-invert max-w-none space-y-8">
                             <section className="p-6 rounded-2xl bg-yellow-500/10 border border-yellow-500/20">
@@ -127,7 +127,7 @@ const MedicalDisclaimer = () => {
                                 <h2 className="text-2xl font-semibold mb-4">Questions</h2>
                                 <p className="text-muted-foreground">
                                     If you have questions about this disclaimer:<br />
-                                    Email: legal@nmove.co
+                                    Email: nmove.co@gmail.com
                                 </p>
                             </section>
                         </div>

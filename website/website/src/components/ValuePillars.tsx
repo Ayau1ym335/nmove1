@@ -13,8 +13,8 @@ const pillars = [
     },
     {
         icon: FileText,
-        title: "Clinician-Ready Summary",
-        description: "One-page reports designed for quick clinical review. Your care team gets the context they need in seconds.",
+        title: "Clinician-Ready Report",
+        description: "Deep reports designed for clinical review. Your care team gets the context they need in seconds.",
     },
 ];
 
