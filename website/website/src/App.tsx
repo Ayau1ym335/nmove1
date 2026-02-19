@@ -10,6 +10,8 @@ import { VideoIntro } from "@/components/VideoIntro";
 import Index from "@/pages/Index";
 import Product from "@/pages/Product";
 import ForPatients from "@/pages/ForPatients";
+import ForInsurers from "@/pages/ForInsurers";
+import ForEmployers from "@/pages/ForEmployers";
 import ForClinicians from "@/pages/ForClinicians";
 import Pricing from "@/pages/Pricing";
 import About from "@/pages/About";
@@ -54,7 +56,10 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/product" element={<Product />} />
+            <Route path="/for-individuals" element={<ForPatients />} />
             <Route path="/for-patients" element={<ForPatients />} />
+            <Route path="/for-insurers" element={<ForInsurers />} />
+            <Route path="/for-employers" element={<ForEmployers />} />
             <Route path="/for-clinicians" element={<ForClinicians />} />
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/about" element={<About />} />

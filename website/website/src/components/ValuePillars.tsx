@@ -1,20 +1,20 @@
-import { TrendingUp, BarChart3, FileText } from "lucide-react";
+import { BarChart3, Scan, TrendingUp } from "lucide-react";
 
 const pillars = [
     {
-        icon: TrendingUp,
-        title: "Continuous Context",
-        description: "Track movement patterns between appointments, not just during visits. Get the full picture of your progress over time.",
-    },
-    {
         icon: BarChart3,
-        title: "Clear Trends",
-        description: "Simple, understandable insights—not confusing charts. See whether you're improving, stable, or need attention.",
+        title: "Actuarially Relevant Data",
+        description: "Gait biomarkers that correlate with long-term health costs, mortality risk, and claims frequency — enriching your underwriting models.",
     },
     {
-        icon: FileText,
-        title: "Clinician-Ready Report",
-        description: "Deep reports designed for clinical review. Your care team gets the context they need in seconds.",
+        icon: Scan,
+        title: "Non-Invasive Assessment",
+        description: "No blood draws, no clinical visits. A wearable sensor captures everything needed to compute biological age and risk scores.",
+    },
+    {
+        icon: TrendingUp,
+        title: "Longitudinal Risk Tracking",
+        description: "Monitor policyholders' aging trajectory over time. Detect deterioration early and reward those who are aging well.",
     },
 ];
 
@@ -24,10 +24,10 @@ export function ValuePillars() {
             <div className="container mx-auto px-6">
                 <div className="text-center mb-16">
                     <h2 className="text-3xl md:text-4xl font-semibold mb-4">
-                        Why track with <span className="text-gradient-primary">NMove</span>?
+                        Why insurers choose <span className="text-gradient-primary">NMove</span>
                     </h2>
                     <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                        Get the context you need between clinical visits, without the complexity.
+                        A new category of health data — derived from how people walk, not what they report.
                     </p>
                 </div>
 

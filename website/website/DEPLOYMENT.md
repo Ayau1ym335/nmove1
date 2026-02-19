@@ -41,20 +41,6 @@ The easiest way to deploy this Vite/React application is using **Vercel** or **N
     vercel --prod
     ```
 
-### Option B: Deploy with Netlify (Drag & Drop)
-
-1.  **Build the project locally:**
-    ```bash
-    npm run build
-    ```
-    This creates a `dist` folder in your project directory.
-2.  **Upload:**
-    - Go to [Netlify Drop](https://app.netlify.com/drop).
-    - Drag and drop the `dist` folder onto the page.
-    - Your site will be live instantly!
-
----
-
 ## 2. Important: Backend Connection
 
 Your application currently tries to connect to a local backend at `http://localhost:8000`:

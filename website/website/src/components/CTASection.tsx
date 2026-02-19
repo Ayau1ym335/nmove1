@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowRight, Stethoscope } from "lucide-react";
+import { ArrowRight, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 
@@ -21,17 +21,18 @@ export function CTASection() {
 
       <div className="container mx-auto px-6 relative z-10">
         <div className="grid md:grid-cols-2 gap-12">
-          {/* Patients CTA */}
+          {/* Individuals CTA */}
           <div className="p-8 md:p-10 rounded-2xl bg-card border border-border">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm mb-6">
-              For Patients
+              For Individuals
             </div>
             <h3 className="text-2xl md:text-3xl font-semibold mb-4">
-              Ready to track your progress?
+              Discover your biological age
             </h3>
             <p className="text-muted-foreground mb-6 leading-relaxed">
-              Join our waitlist for early access. Be among the first to experience
-              better movement tracking between appointments.
+              Join our early access list and be among the first to learn your
+              biological age, aging velocity, and personal risk profile from
+              your walking patterns.
             </p>
 
             {submitted ? (
@@ -56,22 +57,23 @@ export function CTASection() {
             )}
           </div>
 
-          {/* Clinicians CTA */}
+          {/* Insurers CTA */}
           <div className="p-8 md:p-10 rounded-2xl bg-gradient-to-br from-primary/10 to-secondary/10 border border-primary/20">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/20 text-secondary text-sm mb-6">
-              <Stethoscope className="h-4 w-4" />
-              For Clinicians
+              <Building2 className="h-4 w-4" />
+              For Insurers
             </div>
             <h3 className="text-2xl md:text-3xl font-semibold mb-4">
-              See how NMove fits your practice
+              Launch a pilot program
             </h3>
             <p className="text-muted-foreground mb-6 leading-relaxed">
-              Request a sample report template and learn how NMove can give you
-              objective context between patient visits—without adding workflow burden.
+              See how biological age scoring can enrich your underwriting models.
+              Request a demo and explore integration options for your policyholder
+              population.
             </p>
-            <Link to="/for-clinicians">
+            <Link to="/for-insurers">
               <Button variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
-                Request Demo Report
+                Request Insurer Demo
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>

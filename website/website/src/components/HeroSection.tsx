@@ -1,6 +1,6 @@
 import { GaitVisualization } from "./GaitVisualization";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, FileText } from "lucide-react";
+import { ArrowRight, Brain } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function HeroSection() {
@@ -29,7 +29,7 @@ export function HeroSection() {
             >
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-muted border border-border text-sm text-muted-foreground">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                More than just steps
+                Gait-based biological age analysis
               </span>
             </div>
 
@@ -37,17 +37,17 @@ export function HeroSection() {
               className="text-4xl md:text-5xl lg:text-6xl font-semibold leading-tight opacity-0 animate-fade-in"
               style={{ animationDelay: '0.2s' }}
             >
-              Gait trends between visits—
-              <span className="text-gradient-primary">made clear</span>
+              Move Your Age.{" "}
+              <span className="text-gradient-primary">Know Your Risk.</span>
             </h1>
 
             <p
               className="text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed opacity-0 animate-fade-in"
               style={{ animationDelay: '0.3s' }}
             >
-              NMove helps patients track walking patterns over time and share
-              clinician-ready reports. Simple insights for better conversations
-              with your care team.
+              NMove analyzes walking patterns to determine biological age, measure
+              aging velocity, and predict pathology risk — giving insurers and
+              individuals a powerful new lens on long-term health.
             </p>
 
             <div
@@ -56,14 +56,14 @@ export function HeroSection() {
             >
               <Link to="/contact">
                 <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary">
-                  Join Waitlist
+                  Request a Demo
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/for-clinicians">
+              <Link to="/for-insurers">
                 <Button variant="ghost" size="lg" className="text-muted-foreground hover:text-foreground">
-                  <FileText className="mr-2 h-4 w-4" />
-                  See Sample Report
+                  <Brain className="mr-2 h-4 w-4" />
+                  For Insurers
                 </Button>
               </Link>
             </div>
@@ -75,15 +75,15 @@ export function HeroSection() {
             >
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <div className="w-2 h-2 rounded-full bg-green-500" />
-                Not a diagnostic device
+                Science-backed biomarkers
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <div className="w-2 h-2 rounded-full bg-green-500" />
-                Supports clinical care
+                Non-invasive assessment
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <div className="w-2 h-2 rounded-full bg-green-500" />
-                Seeking clinician advisors
+                Actuarially relevant
               </div>
             </div>
           </div>

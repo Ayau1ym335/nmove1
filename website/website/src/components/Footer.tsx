@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 const footerLinks = {
   product: [
     { name: "Product", href: "/product" },
-    { name: "For Patients", href: "/for-patients" },
-    { name: "For Clinicians", href: "/for-clinicians" },
+    { name: "For Insurers", href: "/for-insurers" },
+    { name: "For Individuals", href: "/for-individuals" },
     { name: "Pricing", href: "/pricing" },
   ],
   company: [
@@ -28,11 +28,11 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <img src="/icon.png" alt="NMove" className="w-8 h-8 rounded-sm object-contain" />
+              <img src="/logo.jpeg" alt="NMove" className="w-8 h-8 rounded-sm object-contain" />
               <span className="font-semibold text-lg text-foreground">NMove</span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs mb-4">
-              More than just steps. Gait trends between visits—made clear. Helping patients track walking patterns and share clinician-ready reports.
+              Move Your Age. Gait-based biological age determination, aging velocity tracking, and pathology risk scoring — for insurers and individuals.
             </p>
             <p className="text-sm text-muted-foreground">
               📍 Astana, Kazakhstan

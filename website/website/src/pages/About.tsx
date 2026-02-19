@@ -72,13 +72,11 @@ const About = () => {
                                 </p>
                             </div>
                         </div>
-                        {/* Team Members */}
-                        {/* Team Members */}
                         <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-x-8 gap-y-10 mt-12 mb-12">
                             {/* Profile 1 */}
                             <div className="flex flex-col items-center text-center p-6 bg-card rounded-xl border border-border shadow-sm">
                                 <img
-                                    src="/public/ayau.jpeg"
+                                    src="/ayau.jpeg"
                                     alt="Ayaulym Balginbaeva"
                                     className="w-24 h-24 rounded-full object-cover mb-4"
                                 />
@@ -95,7 +93,7 @@ const About = () => {
 
                             <div className="flex flex-col items-center text-center p-6 bg-card rounded-xl border border-border shadow-sm">
                                 <img
-                                    src="/public/dariya.jpeg"
+                                    src="/dariya.jpeg"
                                     alt="Team Member 2"
                                     className="w-24 h-24 rounded-full object-cover mb-4"
                                 />
@@ -112,7 +110,7 @@ const About = () => {
 
                             <div className="flex flex-col items-center text-center p-6 bg-card rounded-xl border border-border shadow-sm">
                                 <img
-                                    src="/public/aigerym.jpeg"
+                                    src="/aigerym.jpeg"
                                     alt="Team Member 3"
                                     className="w-24 h-24 rounded-full object-cover mb-4"
                                 />
@@ -129,7 +127,7 @@ const About = () => {
 
                             <div className="flex flex-col items-center text-center p-6 bg-card rounded-xl border border-border shadow-sm">
                                 <img
-                                    src="/team/member4.jpg"
+                                    src="/nuraiym.jpeg"
                                     alt="Team Member 4"
                                     className="w-24 h-24 rounded-full object-cover mb-4"
                                 />

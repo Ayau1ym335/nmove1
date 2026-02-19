@@ -9,10 +9,10 @@ import {
     AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-    Activity,
-    Heart,
-    Users,
-    Calendar,
+    Brain,
+    TrendingUp,
+    AlertTriangle,
+    Dna,
     CheckCircle,
     XCircle,
     Clock,
@@ -21,70 +21,71 @@ import {
 
 const whoItHelps = [
     {
-        icon: Activity,
-        title: "Recovering from injury",
-        description: "Track your rehab progress and share it with your physical therapist",
+        icon: Brain,
+        title: "Longevity-focused individuals",
+        description: "Track your biological age and see how lifestyle choices affect your aging trajectory",
     },
     {
-        icon: Heart,
-        title: "Managing recurring pain",
-        description: "Identify patterns and triggers in your movement over time",
+        icon: Dna,
+        title: "Family history of age-related disease",
+        description: "Get early visibility into your personal risk profile before symptoms appear",
     },
     {
-        icon: Users,
-        title: "Post-surgery monitoring",
-        description: "Document your recovery journey with objective data",
+        icon: TrendingUp,
+        title: "Health optimization enthusiasts",
+        description: "Measure whether your diet, exercise, and sleep habits are actually slowing your aging",
     },
     {
-        icon: Calendar,
-        title: "Prevention-minded",
-        description: "Stay ahead of potential issues with regular movement tracking",
+        icon: AlertTriangle,
+        title: "Prevention-minded adults",
+        description: "Identify pathology risk factors years in advance and take targeted action",
     },
 ];
 
 const whatItDoes = [
-    "Tracks your gait patterns during everyday activities",
-    "Shows trends over days, weeks, and months",
-    "Highlights meaningful changes worth discussing",
-    "Lets you add notes about pain, activities, and context",
+    "Determines your biological age from gait patterns",
+    "Measures your aging velocity (fast, normal, or slow ager)",
+    "Scores your risk for falls, neurodegeneration, and cardiovascular decline",
+    "Tracks changes in biological age over time",
+    "Provides a personal longevity dashboard",
 ];
 
 const whatItDoesnt = [
     "Diagnose medical conditions",
     "Prescribe treatments or exercises",
-    "Replace your doctor or physical therapist",
-    "Provide real-time alerts or emergency monitoring",
+    "Replace your doctor or specialist",
+    "Provide real-time emergency monitoring",
     "Make clinical decisions for you",
 ];
 
 const faqs = [
     {
-        question: "Is NMove a medical device?",
-        answer: "No. NMove is a wellness and tracking tool, not a medical device. It tracks movement patterns to help you and your care team have better conversations about your progress. It does not diagnose, treat, or prescribe.",
+        question: "What is biological age and how is it different from chronological age?",
+        answer: "Chronological age is simply how many years you've been alive. Biological age reflects how old your body actually functions — based on measurable biomarkers. Someone who is 60 chronologically might have a biological age of 50 (aging well) or 70 (aging faster than expected). NMove derives biological age from gait patterns, which are among the most powerful predictors of physiological aging.",
     },
     {
-        question: "How long do I need to wear the sensor each day?",
-        answer: "For best results, wear the sensor during your normal daily activities—typically 4-8 hours. The more you wear it, the better your trends will be. You don't need to do anything special; just go about your day.",
+        question: "How accurate is the biological age score?",
+        answer: "NMove uses research-grade sensors and AI models trained on large longitudinal datasets. The biological age score is validated against established aging biomarkers and health outcomes. While not a medical diagnosis, it provides a reliable and reproducible measure of functional aging.",
     },
     {
-        question: "Will my insurance cover NMove?",
-        answer: "Currently, NMove is not covered by insurance. We're a direct-to-consumer product. However, we're exploring partnerships with healthcare systems for potential coverage in the future.",
+        question: "What does 'aging velocity' mean?",
+        answer: "Aging velocity measures how fast or slow you are aging relative to your peers. A 'slow ager' is someone whose biological age is improving or staying stable over time. A 'fast ager' is someone whose biological age is increasing faster than their chronological age. Tracking velocity over time is more actionable than a single snapshot score.",
     },
     {
-        question: "How accurate is the data?",
-        answer: "NMove uses research-grade sensors similar to those used in clinical gait labs. While not intended for diagnosis, the data is reliable enough to track trends and support meaningful conversations with your care team.",
+        question: "What pathology risks does NMove detect?",
+        answer: "NMove's gait analysis can flag early risk signals for falls and balance disorders, neurodegenerative conditions (such as early Parkinson's patterns), cardiovascular health markers, and musculoskeletal decline. These are risk indicators, not diagnoses — always consult a healthcare professional for medical decisions.",
     },
     {
-        question: "Can I share my data with my doctor?",
-        answer: "Yes! You can generate a One-File Report report anytime and share it via email or print. The report is designed to be reviewed quickly, so it won't take up your doctor's valuable time.",
+        question: "How long do I need to wear the sensor?",
+        answer: "For best results, wear the sensor during normal daily activities — typically 4–8 hours. The more data captured, the more accurate your biological age score. You don't need to do anything special; just go about your day.",
     },
     {
-        question: "What if I have multiple conditions affecting my gait?",
-        answer: "NMove tracks overall movement patterns rather than specific conditions. This makes it useful for anyone with gait concerns, regardless of the underlying cause. Your clinician can interpret the trends in the context of your specific situation.",
+        question: "Can I improve my biological age score?",
+        answer: "Yes. Biological age is not fixed. Regular exercise, quality sleep, stress management, and good nutrition have all been shown to slow biological aging. NMove lets you track whether your lifestyle interventions are actually working — giving you objective feedback over time.",
     },
     {
         question: "Is there a mobile app?",
-        answer: "Yes, NMove includes a smartphone app for iOS and Android."
+        answer: "Yes, NMove includes a smartphone app for iOS and Android where you can view your biological age score, aging velocity trend, and risk profile.",
     },
     {
         question: "What happens to my data if I cancel?",
@@ -92,7 +93,7 @@ const faqs = [
     },
 ];
 
-const ForPatients = () => {
+const ForIndividuals = () => {
     return (
         <div className="min-h-screen bg-background">
             <Navbar />
@@ -102,14 +103,16 @@ const ForPatients = () => {
                 <div className="container mx-auto px-6">
                     <div className="max-w-3xl mx-auto text-center">
                         <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm mb-6">
-                            For Patients
+                            For Individuals
                         </span>
                         <h1 className="text-4xl md:text-5xl font-semibold mb-6">
-                            Track your progress. <span className="text-gradient-primary">Share your story.</span>
+                            Discover your biological age.{" "}
+                            <span className="text-gradient-primary">Move your age.</span>
                         </h1>
                         <p className="text-xl text-muted-foreground">
-                            NMove helps you capture what happens between appointments, so your care team
-                            gets the full picture of your movement journey.
+                            NMove analyzes your walking patterns to reveal your biological age,
+                            aging velocity, and personal pathology risk — giving you a powerful
+                            new window into your long-term health.
                         </p>
                     </div>
                 </div>
@@ -203,7 +206,7 @@ const ForPatients = () => {
                                     <div className="space-y-4 text-muted-foreground">
                                         <p>
                                             <strong className="text-foreground">Morning:</strong> Put on your NMove sensor.
-                                            It clips to your ankle or shoe—takes about 10 seconds.
+                                            It clips to your ankle or shoe — takes about 10 seconds.
                                         </p>
                                         <p>
                                             <strong className="text-foreground">During the day:</strong> Just live your life.
@@ -214,8 +217,8 @@ const ForPatients = () => {
                                             place it on the charger. Your data syncs automatically.
                                         </p>
                                         <p>
-                                            <strong className="text-foreground">Optional:</strong> Open the app to add
-                                            notes about your day—pain levels, activities, or anything relevant.
+                                            <strong className="text-foreground">In the app:</strong> View your biological age
+                                            score, aging velocity trend, and top risk flags — updated daily.
                                         </p>
                                     </div>
                                 </div>
@@ -256,13 +259,13 @@ const ForPatients = () => {
             {/* CTA */}
             <section className="py-16 bg-muted/30">
                 <div className="container mx-auto px-6 text-center">
-                    <h2 className="text-3xl font-semibold mb-4">Ready to track your progress?</h2>
+                    <h2 className="text-3xl font-semibold mb-4">Ready to discover your biological age?</h2>
                     <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-                        Join our waitlist for early access. Be among the first to try NMove.
+                        Join our early access list. Be among the first to move your age.
                     </p>
                     <Link to="/contact">
                         <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary">
-                            Join Waitlist
+                            Join Early Access
                             <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                     </Link>
@@ -274,4 +277,4 @@ const ForPatients = () => {
     );
 };
 
-export default ForPatients;
+export default ForIndividuals;

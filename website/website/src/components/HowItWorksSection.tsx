@@ -1,29 +1,29 @@
-import { Watch, Footprints, TrendingUp, Share2 } from "lucide-react";
+import { Watch, Footprints, Brain, TrendingUp } from "lucide-react";
 
 const steps = [
   {
     icon: Watch,
     step: "1",
     title: "Wear",
-    description: "Put on your NMove sensor—it's lightweight and comfortable for all-day wear.",
+    description: "Put on your NMove sensor — lightweight and comfortable for all-day wear.",
   },
   {
     icon: Footprints,
     step: "2",
     title: "Walk Normally",
-    description: "Go about your day. The sensor captures movement data during everyday activities.",
+    description: "Go about your day. The sensor captures hundreds of gait parameters automatically.",
+  },
+  {
+    icon: Brain,
+    step: "3",
+    title: "AI Scores Your Age",
+    description: "Our engine computes your biological age, aging velocity, and pathology risk scores.",
   },
   {
     icon: TrendingUp,
-    step: "3",
-    title: "Trends Update",
-    description: "Your dashboard updates with daily and weekly trends. See your progress at a glance.",
-  },
-  {
-    icon: Share2,
     step: "4",
-    title: "Share Report",
-    description: "Generate a deep report for your clinician before your next visit.",
+    title: "Track & Act",
+    description: "Monitor your biological age over time. See how lifestyle changes affect your aging trajectory.",
   },
 ];
 

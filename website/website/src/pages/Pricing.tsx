@@ -12,6 +12,7 @@ const tiers = [
         period: "",
         description: "Basic tracking to get started",
         features: [
+            "Functional Risk Score (basic)",
             "Basic gait trend tracking",
             "7-day history",
             "Daily status indicator",
@@ -25,10 +26,12 @@ const tiers = [
         name: "Plus",
         price: "$15",
         period: "/month",
-        description: "Full features for active tracking",
+        description: "Track and slow your movement aging",
         features: [
             "Everything in Free",
             "Unlimited history",
+            "Movement Age Indicator",
+            "Aging Speed Tracking",
             "Weekly trend reports",
             "Export clinician reports",
             "Notes & event logging",
@@ -45,6 +48,7 @@ const tiers = [
         description: "For serious users, rehab, athletes, chronic issues",
         features: [
             "Everything in Plus",
+            "AI Functional Risk Interpretation",
             "Early features",
             "Practice-wide analytics",
             "EHR integration (coming)",

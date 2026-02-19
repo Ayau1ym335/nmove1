@@ -14,8 +14,8 @@ const navLinks = [
   {
     name: "Solutions",
     children: [
-      { name: "For Patients", href: "/for-patients" },
-      { name: "For Clinicians", href: "/for-clinicians" },
+      { name: "For Insurers", href: "/for-insurers" },
+      { name: "For Individuals", href: "/for-individuals" },
     ],
   },
   { name: "Pricing", href: "/pricing" },
@@ -34,7 +34,7 @@ export function Navbar() {
       <div className="container mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <img src="/icon.png" alt="NMove" className="w-8 h-8 rounded-sm object-contain" />
+          <img src="/logo.jpeg" alt="NMove" className="w-8 h-8 rounded-sm object-contain" />
           <span className="font-semibold text-lg text-foreground">NMove</span>
         </Link>
 
