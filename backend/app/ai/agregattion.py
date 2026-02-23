@@ -95,9 +95,6 @@ class ReportAggregator:
         
         return alerts
     
-    # ============================================
-    # 2. CLINICAL METRICS DASHBOARD
-    # ============================================
     
     def get_primary_gait_parameters(self, sessions: List[WalkingSessions]) -> Dict:
         """Таблица основных параметров походки"""

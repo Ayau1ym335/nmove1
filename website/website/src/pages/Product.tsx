@@ -72,21 +72,21 @@ const userFeatures = [
     },
 ];
 
-const clinicianFeatures = [
+const insurerFeatures = [
     {
         icon: FileText,
-        title: "Deep Report",
-        description: "Everything relevant on a single file",
+        title: "Biological Age Report",
+        description: "Per-policyholder biological age vs. chronological age delta",
     },
     {
         icon: TrendingUp,
-        title: "Trend Timeline",
-        description: "Visual history of key metrics",
+        title: "Portfolio Risk Scoring",
+        description: "Aggregate aging velocity and risk tier across your policyholder base",
     },
     {
         icon: Zap,
-        title: "Key Changes + Context",
-        description: "What matters most, highlighted",
+        title: "API Integration",
+        description: "Connect directly to your underwriting or wellness platform",
     },
 ];
 
@@ -166,7 +166,7 @@ const Product = () => {
                 <div className="container mx-auto px-6">
                     <div className="grid lg:grid-cols-2 gap-12 items-center">
                         <div>
-                            <span className="text-sm text-primary font-medium">For Patients</span>
+                            <span className="text-sm text-primary font-medium">For Individuals</span>
                             <h2 className="text-3xl font-semibold mt-2 mb-6">What you'll see</h2>
                             <div className="space-y-6">
                                 {userFeatures.map((feature) => (
@@ -197,7 +197,7 @@ const Product = () => {
                 </div>
             </section>
 
-            {/* What Clinicians Get */}
+            {/* What Insurers Get */}
             <section className="py-16">
                 <div className="container mx-auto px-6">
                     <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -207,16 +207,16 @@ const Product = () => {
                                 <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center mx-auto mb-4">
                                     <FileText className="h-8 w-8 text-secondary" />
                                 </div>
-                                <p className="text-muted-foreground">Sample Report</p>
-                                <p className="text-sm text-muted-foreground/60">One-page clinical summary</p>
+                                <p className="text-muted-foreground">Insurer Report</p>
+                                <p className="text-sm text-muted-foreground/60">Portfolio risk overview</p>
                             </div>
                         </div>
 
                         <div className="order-1 lg:order-2">
-                            <span className="text-sm text-secondary font-medium">For Clinicians</span>
-                            <h2 className="text-3xl font-semibold mt-2 mb-6">What clinicians receive</h2>
+                            <span className="text-sm text-secondary font-medium">For Insurers</span>
+                            <h2 className="text-3xl font-semibold mt-2 mb-6">What insurers receive</h2>
                             <div className="space-y-6">
-                                {clinicianFeatures.map((feature) => (
+                                {insurerFeatures.map((feature) => (
                                     <div key={feature.title} className="flex items-start gap-4">
                                         <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center shrink-0">
                                             <feature.icon className="h-5 w-5 text-secondary" />
@@ -229,9 +229,9 @@ const Product = () => {
                                 ))}
                             </div>
                             <div className="mt-8">
-                                <Link to="/for-clinicians">
+                                <Link to="/for-insurers">
                                     <Button variant="outline" className="border-secondary/50 text-secondary hover:bg-secondary/10">
-                                        See sample report →
+                                        See insurer details →
                                     </Button>
                                 </Link>
                             </div>

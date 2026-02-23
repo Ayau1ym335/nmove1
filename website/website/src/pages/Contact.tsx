@@ -9,7 +9,7 @@ import { useState } from "react";
 import { CheckCircle, Mail, MapPin, ArrowRight } from "lucide-react";
 
 const Contact = () => {
-    const [formType, setFormType] = useState<"patient" | "clinician">("patient");
+    const [formType, setFormType] = useState<"individual" | "insurer">("individual");
     const [formData, setFormData] = useState({
         name: "",
         email: "",
@@ -84,9 +84,9 @@ const Contact = () => {
                                     </div>
                                     <h3 className="text-xl font-semibold mb-2">Thank you!</h3>
                                     <p className="text-muted-foreground">
-                                        {formType === "patient"
+                                        {formType === "individual"
                                             ? "You're on the waitlist! We'll be in touch when early access opens."
-                                            : "We'll send you a sample report and more information about our clinician program."}
+                                            : "Our team will reach out within 1–2 business days to discuss a pilot program."}
                                     </p>
                                 </div>
                             ) : (
@@ -95,28 +95,28 @@ const Contact = () => {
 
                                     <RadioGroup
                                         value={formType}
-                                        onValueChange={(value) => setFormType(value as "patient" | "clinician")}
+                                        onValueChange={(value) => setFormType(value as "individual" | "insurer")}
                                         className="flex gap-4 mb-8"
                                     >
                                         <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="patient" id="patient" />
-                                            <Label htmlFor="patient" className="cursor-pointer">Patient / Individual</Label>
+                                            <RadioGroupItem value="individual" id="individual" />
+                                            <Label htmlFor="individual" className="cursor-pointer">Individual</Label>
                                         </div>
                                         <div className="flex items-center space-x-2">
-                                            <RadioGroupItem value="clinician" id="clinician" />
-                                            <Label htmlFor="clinician" className="cursor-pointer">Clinician / Partner</Label>
+                                            <RadioGroupItem value="insurer" id="insurer" />
+                                            <Label htmlFor="insurer" className="cursor-pointer">Insurer / Business</Label>
                                         </div>
                                     </RadioGroup>
 
                                     <div className="space-y-6">
                                         <div className="grid md:grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="name">Name {formType === "clinician" && "*"}</Label>
+                                                <Label htmlFor="name">Name {formType === "insurer" && "*"}</Label>
                                                 <Input
                                                     id="name"
                                                     value={formData.name}
                                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                                    required={formType === "clinician"}
+                                                    required={formType === "insurer"}
                                                     className="bg-background"
                                                 />
                                             </div>
@@ -133,9 +133,9 @@ const Contact = () => {
                                             </div>
                                         </div>
 
-                                        {formType === "clinician" && (
+                                        {formType === "insurer" && (
                                             <div className="space-y-2">
-                                                <Label htmlFor="organization">Organization / Practice</Label>
+                                                <Label htmlFor="organization">Insurance Company / Organization</Label>
                                                 <Input
                                                     id="organization"
                                                     value={formData.organization}
@@ -152,9 +152,9 @@ const Contact = () => {
                                                 value={formData.message}
                                                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                                                 placeholder={
-                                                    formType === "patient"
+                                                    formType === "individual"
                                                         ? "Tell us about your interest in NMove..."
-                                                        : "Tell us about your practice and interest in NMove..."
+                                                        : "Tell us about your organization and interest in biological age data..."
                                                 }
                                                 rows={4}
                                                 className="bg-background"
@@ -179,7 +179,7 @@ const Contact = () => {
                                             className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
                                             disabled={isSubmitting}
                                         >
-                                            {isSubmitting ? "Sending..." : (formType === "patient" ? "Join Waitlist" : "Request Sample Report")}
+                                            {isSubmitting ? "Sending..." : (formType === "individual" ? "Join Waitlist" : "Request Pilot Program")}
                                             <ArrowRight className="ml-2 h-4 w-4" />
                                         </Button>
                                     </div>
@@ -224,13 +224,13 @@ const Contact = () => {
                             </div>
 
                             <div className="p-6 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 border border-primary/20">
-                                <h3 className="font-semibold mb-3">For clinicians</h3>
+                                <h3 className="font-semibold mb-3">For insurers</h3>
                                 <p className="text-sm text-muted-foreground mb-4">
-                                    Interested in joining our clinician advisory network or participating
-                                    in our pilot program? We'd love to hear from you.
+                                    Looking to enrich your underwriting models with biological age data?
+                                    Let's explore a pilot program for your portfolio.
                                 </p>
-                                <a href="/for-clinicians" className="text-primary text-sm hover:underline">
-                                    Learn more about our clinician program →
+                                <a href="/for-insurers" className="text-primary text-sm hover:underline">
+                                    Learn more about insurer solutions →
                                 </a>
                             </div>
                         </div>

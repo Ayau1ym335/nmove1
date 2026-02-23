@@ -13,8 +13,6 @@ from config import get_settings
 settings = get_settings()
 
 app = FastAPI()
-
-# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -23,7 +21,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
 app.include_router(contact.router)
 app.include_router(payment.router)
 

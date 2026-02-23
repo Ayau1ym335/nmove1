@@ -13,9 +13,8 @@ import os
 load_dotenv() 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 21600
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-app = FastAPI()
 
 def verify_password(plain_p, hashed_p):
     return pwd_context.verify(plain_p, hashed_p)

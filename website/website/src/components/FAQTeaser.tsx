@@ -13,8 +13,8 @@ const faqs = [
         answer: "No. NMove is a wellness tool that tracks movement patterns. It does not diagnose, treat, or prescribe. Always consult with your healthcare provider for medical advice.",
     },
     {
-        question: "How does NMove help with my appointments?",
-        answer: "NMove provides a deep report of your movement trends between visits. Your clinician can review this context to have more informed conversations about your progress.",
+        question: "How does NMove determine biological age?",
+        answer: "NMove uses research-grade gait sensors to capture dozens of movement biomarkers. Our AI models analyze these patterns against validated aging datasets to produce your biological age score — a stronger health predictor than chronological age alone.",
     },
     {
         question: "What do I need to use NMove?",
@@ -58,7 +58,7 @@ export function FAQTeaser() {
                     </Accordion>
 
                     <div className="text-center mt-8">
-                        <Link to="/for-patients">
+                        <Link to="/for-individuals">
                             <Button variant="ghost" className="text-primary hover:text-primary/80">
                                 View all FAQs →
                             </Button>

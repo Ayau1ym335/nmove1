@@ -24,8 +24,8 @@ const About = () => {
                             More than just <span className="text-gradient-primary">steps</span>
                         </h1>
                         <p className="text-xl text-muted-foreground">
-                            We're building tools to bridge the gap between clinical visits,
-                            giving patients and clinicians the context they need.
+                            We're building the future of biological age assessment — giving insurers
+                            and individuals a powerful new lens on aging and long-term health risk.
                         </p>
                     </div>
                 </div>
@@ -42,13 +42,13 @@ const About = () => {
                             <div>
                                 <h2 className="text-2xl font-semibold mb-4">Our Mission</h2>
                                 <p className="text-lg text-muted-foreground leading-relaxed">
-                                    To empower individuals on their path to recovery by transforming the way
-                                    gait rehabilitation is managed and monitored.
+                                    To unlock biological age as a new category of health data — making it
+                                    accessible to insurers for smarter underwriting, and to individuals
+                                    for a clearer view of their long-term health.
                                 </p>
                                 <p className="text-lg text-muted-foreground leading-relaxed mt-4">
-                                    We aim to enhance the quality of life for people with mobility challenges,
-                                    ensuring that every step they take is a step toward a healthier, more active,
-                                    and independent future.
+                                    We believe your walk tells more about your health than any blood test.
+                                    Our mission is to put that insight in the hands of people who can act on it.
                                 </p>
                             </div>
                         </div>
@@ -101,7 +101,7 @@ const About = () => {
                                     Dariya Bekbolat
                                 </h3>
                                 <p className="text-sm font-medium text-primary mb-3">
-                                    Frontend & Business Advisor 
+                                    Frontend & Business Advisor
                                 </p>
                                 <p className="text-sm text-muted-foreground leading-relaxed">
                                     Leads UI development and aligns product decisions with business goals.
@@ -118,7 +118,7 @@ const About = () => {
                                     Aigerym Qumarbek
                                 </h3>
                                 <p className="text-sm font-medium text-primary mb-3">
-                                    Hardware Lead 
+                                    Hardware Lead
                                 </p>
                                 <p className="text-sm text-muted-foreground leading-relaxed">
                                     Designs, integrates, and validates hardware components of the system.
