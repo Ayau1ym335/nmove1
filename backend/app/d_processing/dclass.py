@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 import datetime
 import numpy as np
 from typing import Optional, Dict
-from app.data.tables import ActivityType
+from data.tables import ActivityType
 
 @dataclass
 class Metadata:
