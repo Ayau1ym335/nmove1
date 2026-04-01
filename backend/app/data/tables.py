@@ -136,6 +136,7 @@ class Profiles(Base):
     gender = Column(SQLEnum(GenderEnum), nullable=False)
     weight = Column(Float, nullable=False)
     height = Column(Float, nullable=False)
+    nationality = Column(String, nullable=False)
 
     have_injury = Column(Boolean, nullable=False, default=False)
     have_banomaly = Column(Boolean, nullable=False, default=False)

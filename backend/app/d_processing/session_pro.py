@@ -4,6 +4,7 @@ import logging
 from app.data.tables import SessionStatus
 from .dclass import Metadata
 from datetime import timedelta
+from .movement_age import calculate_movement_age
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('SessionSummary')
@@ -12,7 +13,9 @@ def calculate_session_summary(
     metrics_list: List[Dict[str, Any]],
     orientation: np.ndarray,
     activities,
-    session_metadata: Metadata
+    session_metadata: Metadata,
+    chronological_age: Optional[int] = None,
+    baseline_summary: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     if not metrics_list or len(metrics_list) == 0:
         logger.warning("Empty metrics list - no steps detected.")
@@ -81,7 +84,13 @@ def calculate_session_summary(
         'avg_impact_force': clinical_stats.get('avg_impact_force'),
         'avg_peak_angular_velocity': clinical_stats.get('avg_peak_angular_velocity'),
     }
-    
+
+    summary['movement_age'] = calculate_movement_age(
+        session_summary=summary,
+        chronological_age=chronological_age,
+        baseline_summary=baseline_summary,
+    )
+
     return summary
 
 
