@@ -30,7 +30,9 @@ class User(Base):
     )
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(
-        SAEnum(UserRole, name="user_role", create_type=True),
+        # create_type=False: the ENUM type is managed by the Alembic migration,
+        # not by SQLAlchemy at ORM level. Prevents "type already exists" errors.
+        SAEnum(UserRole, name="user_role", create_type=False),
         nullable=False,
     )
     full_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -45,6 +47,8 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
+        # onupdate=func.now() is a Python-side default (sets value in ORM before INSERT/UPDATE).
+        # The DB-side trigger in the migration handles it for direct SQL updates.
         onupdate=func.now(),
         nullable=False,
     )

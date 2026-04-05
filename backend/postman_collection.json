@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "nmove-auth-api-v1",
-    "name": "nmove Auth API",
-    "description": "Complete authentication flow for the nmove gait analysis wearable app. Covers registration, login, token refresh, logout, and role-guard verification.",
+    "name": "NMove Auth API",
+    "description": "Complete authentication flow for the NMove gait analysis wearable app. Covers registration, login, token refresh, logout, and role-guard verification.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -348,7 +348,7 @@
       "name": "Role Guard Tests",
       "item": [
         {
-          "name": "8. Doctor token hits patient route (expect 403)",
+          "name": "8. Doctor token on patient-only route (expect 403)",
           "request": {
             "method": "GET",
             "header": [
@@ -358,11 +358,11 @@
               }
             ],
             "url": {
-              "raw": "{{base_url}}/patient/dashboard",
+              "raw": "{{base_url}}/auth/patient-only-test",
               "host": ["{{base_url}}"],
-              "path": ["patient", "dashboard"]
+              "path": ["auth", "patient-only-test"]
             },
-            "description": "A doctor's access token should be rejected by a patient-only route with HTTP 403. Demonstrates role guard enforcement."
+            "description": "A doctor's access token should be rejected by a patient-only route with HTTP 403. The /auth/patient-only-test route is a Day 1 test stub that uses require_patient. Demonstrates role guard enforcement."
           },
           "event": [
             {

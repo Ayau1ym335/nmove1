@@ -1,8 +1,7 @@
 """app/core/security.py — Password hashing, JWT token creation, and refresh token generation."""
 import hashlib
 import secrets
-import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from fastapi import HTTPException, status
 from jose import ExpiredSignatureError, JWTError, jwt
@@ -22,7 +21,7 @@ _pwd_context = CryptContext(
 
 
 def hash_password(plain: str) -> str:
-    """Hash a plain-text password with bcrypt."""
+    """Hash a plain-text password with bcrypt. Returns str."""
     return _pwd_context.hash(plain)
 
 
@@ -39,7 +38,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def create_access_token(user_id: uuid.UUID | str, role: str) -> str:
+def create_access_token(user_id: object, role: str) -> str:
     """Create a signed JWT access token.
 
     Payload:

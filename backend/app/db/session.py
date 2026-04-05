@@ -1,5 +1,4 @@
 """app/db/session.py — Async engine, session factory, and FastAPI get_db dependency."""
-import os
 from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import (
@@ -8,18 +7,14 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from app.core.config import settings
 from app.db.base import Base  # noqa: F401 — ensure Base is importable from this module
 
 # ---------------------------------------------------------------------------
-# Engine — reads DATABASE_URL from environment; never hardcode credentials.
+# Engine — reads DATABASE_URL from settings; never hardcode credentials.
 # ---------------------------------------------------------------------------
-_DATABASE_URL: str = os.environ.get(
-    "DATABASE_URL",
-    "postgresql+asyncpg://postgres:password@localhost:5433/NMove",
-)
-
 engine = create_async_engine(
-    _DATABASE_URL,
+    settings.DATABASE_URL,
     echo=False,           # flip to True to log all SQL in development
     pool_pre_ping=True,   # recycles stale connections gracefully
     pool_size=10,

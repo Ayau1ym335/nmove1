@@ -88,6 +88,22 @@ def upgrade() -> None:
     )
     op.create_index("ix_users_email", "users", ["email"], unique=True)
 
+    # Trigger to auto-update updated_at on every row update
+    op.execute("""
+        CREATE OR REPLACE FUNCTION update_updated_at_column()
+        RETURNS TRIGGER AS $$
+        BEGIN
+            NEW.updated_at = now();
+            RETURN NEW;
+        END;
+        $$ language 'plpgsql';
+    """)
+    op.execute("""
+        CREATE TRIGGER users_updated_at_trigger
+        BEFORE UPDATE ON users
+        FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    """)
+
     # ------------------------------------------------------------------
     # 3. sessions (refresh token store)
     # ------------------------------------------------------------------
@@ -274,6 +290,10 @@ def downgrade() -> None:
     op.drop_index("ix_sessions_token_hash", table_name="sessions")
     op.drop_index("ix_sessions_user_id", table_name="sessions")
     op.drop_table("sessions")
+
+    # Drop trigger and function before users table
+    op.execute("DROP TRIGGER IF EXISTS users_updated_at_trigger ON users")
+    op.execute("DROP FUNCTION IF EXISTS update_updated_at_column()")
 
     op.drop_index("ix_users_email", table_name="users")
     op.drop_table("users")

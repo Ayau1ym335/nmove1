@@ -98,6 +98,7 @@ services:
     env_file:
       - .env
     environment:
+      # Override to ensure Docker service names are used (not localhost)
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-nmove}
       REDIS_URL: redis://redis:6379/0
       MINIO_ENDPOINT: minio:9000
@@ -108,6 +109,52 @@ services:
         condition: service_healthy
     networks:
       - nmove_net
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: docker/celery.Dockerfile
+    container_name: nmove_celery_worker
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+    volumes:
+      - ./backend:/app
+    networks:
+      - nmove_net
+    command: >
+      celery -A celery_app worker
+      --loglevel=info
+      --queues=gait_processing
+      --concurrency=2
+      --hostname=nmove-worker@%h
+
+  flower:
+    image: mher/flower:2.0
+    container_name: nmove_flower
+    restart: always
+    depends_on:
+      - redis
+      - celery_worker
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=${REDIS_URL}
+      - FLOWER_BASIC_AUTH=admin:nmoveflower
+    networks:
+      - nmove_net
+    command: >
+      celery
+      --broker=${REDIS_URL}
+      flower
+      --port=5555
 
 networks:
   nmove_net:

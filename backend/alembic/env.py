@@ -45,6 +45,7 @@ def get_sync_url() -> str:
     """
     url = os.environ.get(
         "DATABASE_URL",
+        # Fallback for local dev outside Docker — uses host port 5433
         "postgresql+asyncpg://postgres:password@localhost:5433/nmove",
     )
     # Swap async driver → sync driver for Alembic

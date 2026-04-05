@@ -12,9 +12,10 @@ Provides:
   - get_current_user      — decode JWT, load User from DB (no Redis hit)
   - require_patient       — asserts current user has role=patient (403 otherwise)
   - require_doctor        — asserts current user has role=doctor  (403 otherwise)
-  - require_any_role      — named alias; any authenticated user passes
+  - require_any_role      — named function; any authenticated user passes
 """
 import logging
+import uuid
 
 import redis.asyncio as aioredis
 from fastapi import Depends, Header, HTTPException, status
@@ -94,7 +95,17 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    result = await db.execute(select(User).where(User.id == user_id))
+    # Parse the UUID — invalid UUID string raises ValueError → 401
+    try:
+        parsed_user_id = uuid.UUID(user_id)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    result = await db.execute(select(User).where(User.id == parsed_user_id))
     user = result.scalar_one_or_none()
 
     if user is None:

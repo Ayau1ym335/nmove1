@@ -205,3 +205,42 @@ async def logout(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error",
         )
+
+
+# ---------------------------------------------------------------------------
+# GET /auth/patient-only-test  — Day 1 role guard smoke-test stub
+# ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/patient-only-test",
+    status_code=status.HTTP_200_OK,
+    summary="Patient-only test route for role guard verification",
+    include_in_schema=True,
+    tags=["auth"],
+)
+async def patient_only_test(
+    current_user: User = Depends(require_any_role),
+) -> dict:
+    """Stub route protected by patient role check.
+
+    Used by Postman role guard test #8 to verify that a doctor token receives
+    HTTP 403 on a patient-only endpoint. Returns 200 for patients, 403 for all
+    other roles.
+
+    Note: This route is intentionally kept simple for Day 1 testing.
+    Replace with a real patient dashboard endpoint in Day 2.
+    """
+    from app.models.user import UserRole
+
+    if current_user.role != UserRole.patient:
+        logger.warning(
+            "Role guard failed on patient-only-test: user=%s role=%s",
+            current_user.id,
+            current_user.role,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Patient access required",
+        )
+    return {"message": "Patient access confirmed", "user_id": str(current_user.id)}

@@ -54,7 +54,9 @@ class MetricsSnapshot(Base):
         SAEnum(
             InterpretationStatus,
             name="interpretation_status",
-            create_type=True,
+            # create_type=False: ENUM type is managed by Alembic migration,
+            # not by SQLAlchemy ORM. Prevents "type already exists" on startup.
+            create_type=False,
         ),
         nullable=False,
         default=InterpretationStatus.normal,

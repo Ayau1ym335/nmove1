@@ -33,6 +33,11 @@ from app.schemas.auth import (
 
 logger = logging.getLogger(__name__)
 
+# A dummy hash used to prevent timing attacks when the user is not found.
+# verify_password is called unconditionally so response time is the same
+# whether the email exists or not.
+_DUMMY_HASH = hash_password("dummy_timing_guard_password_that_never_matches")
+
 
 async def register_user(db: AsyncSession, data: RegisterRequest) -> RegisterResponse:
     """Create a new user account.
@@ -84,7 +89,8 @@ async def login_user(db: AsyncSession, data: LoginRequest) -> TokenResponse:
     Steps:
     1. Fetch user by email.
     2. Verify password — identical error for wrong email and wrong password
-       to prevent user enumeration attacks.
+       to prevent user enumeration attacks. verify_password() is ALWAYS called
+       (even when user is None) to prevent timing-based email enumeration.
     3. Check is_active (403 not 401 — user is known, just disabled).
     4. Create JWT access token.
     5. Generate opaque refresh token; store hash in DB + Redis.
@@ -105,9 +111,15 @@ async def login_user(db: AsyncSession, data: LoginRequest) -> TokenResponse:
     result = await db.execute(select(User).where(User.email == data.email))
     user = result.scalar_one_or_none()
 
-    # 2. Validate credentials — identical message prevents email enumeration.
-    # verify_password is called even when user is None to prevent timing attacks.
-    if user is None or not verify_password(data.password, user.hashed_password):
+    # 2. Validate credentials — ALWAYS call verify_password to prevent timing
+    #    attacks that distinguish "email not found" from "wrong password".
+    #    If user is None, compare against a pre-computed dummy hash so the
+    #    bcrypt work factor is always exercised.
+    stored_hash = user.hashed_password if user is not None else _DUMMY_HASH
+    password_ok = verify_password(data.password, stored_hash)
+
+    if user is None or not password_ok:
+        # Identical message regardless of whether email or password was wrong.
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password.",
@@ -220,11 +232,12 @@ async def refresh_tokens(db: AsyncSession, raw_refresh_token: str) -> RefreshRes
 
     # 5. TOKEN ROTATION — full rollback if any step fails
     new_hash: str | None = None
+    new_raw: str | None = None
     try:
         # 5a. Delete old session row from DB
         await db.delete(session)
 
-        # 5b. Delete old key from Redis
+        # 5b. Delete old key from Redis (before generating new ones)
         await delete_refresh_token(token_hash)
 
         # 5c. Generate new cryptographically-secure token pair
@@ -239,11 +252,11 @@ async def refresh_tokens(db: AsyncSession, raw_refresh_token: str) -> RefreshRes
         )
         db.add(new_session)
 
-        # 5e. Store new hash in Redis
-        await store_refresh_token(new_hash, user.id, settings.REFRESH_TOKEN_EXPIRE_DAYS)
-
-        # 5f. Commit DB atomically
+        # 5e. Commit DB atomically (old deleted + new inserted in one transaction)
         await db.commit()
+
+        # 5f. Store new hash in Redis (after successful DB commit)
+        await store_refresh_token(new_hash, user.id, settings.REFRESH_TOKEN_EXPIRE_DAYS)
 
     except Exception:
         logger.exception(

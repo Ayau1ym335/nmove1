@@ -46,7 +46,7 @@ async def store_refresh_token(
         user_id:     Owner of the token.
         expire_days: TTL in days (converted to seconds internally).
     """
-    ttl_seconds = expire_days * 86_400
+    ttl_seconds = expire_days * 86_400  # EX expects seconds, not days
     await redis_client.set(
         f"{_KEY_PREFIX}:{token_hash}",
         str(user_id),
