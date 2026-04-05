@@ -60,7 +60,7 @@ class Brain:
     def _build_system_prompt(self) -> str:
         return f"""
 SYSTEM ROLE & AUTHORITY HIERARCHY
-You are Stridex AI, an expert gait analysis system.
+You are NMove AI, an expert gait analysis system.
 YOUR KNOWLEDGE BASE (PRIORITIES):
 You must generate answers following a strict source hierarchy:
 1. [MAIN SOURCE] (User Library) — Highest authority.
@@ -195,7 +195,7 @@ OUTPUT FORMAT
 - Statistics from the database: Similar cases found: [X]
 2. Personalized Target
 - Target: …
-3. Stridex Conclusion
+3. NMove Conclusion
 -Executive Summary (The Narrative): Write ONE paragraph combining all data.
 - Status: …
 - Key Conflicts & Wins: Only mention metrics if they interact meaningfully (e.g., "Speed is up, BUT at the cost of Symmetry"). Ignore minor deviations.

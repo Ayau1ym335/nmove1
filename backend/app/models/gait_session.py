@@ -1,7 +1,8 @@
-"""app/models/gait_session.py — Gait recording sessions."""
+"""app/models/gait_session.py — Gait recording sessions (TimescaleDB hypertable)."""
 import uuid
+from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String
+from sqlalchemy import DateTime, Float, ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
@@ -24,21 +25,43 @@ class GaitSession(Base):
         nullable=False,
         index=True,
     )
-    started_at: Mapped[str] = mapped_column(
-        DateTime(timezone=True), nullable=False
+    device_id: Mapped[str | None] = mapped_column(
+        String(100),    # ESP32 device identifier
+        nullable=True,
     )
-    ended_at: Mapped[str | None] = mapped_column(
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        comment="TimescaleDB partition key",
+    )
+    ended_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    device_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    raw_data_path: Mapped[str | None] = mapped_column(
-        String(512), nullable=True, comment="Path in MinIO bucket"
+    duration_seconds: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+        comment="Computed on session close",
     )
-    created_at: Mapped[str] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+    raw_data_path: Mapped[str | None] = mapped_column(
+        String(500),   # MinIO object path
+        nullable=True,
+    )
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
     )
 
-    user: Mapped["User"] = relationship("User", back_populates="gait_sessions")  # noqa: F821
+    # Relationships — lazy="selectin" for async safety
+    user: Mapped["User"] = relationship(  # noqa: F821
+        "User",
+        back_populates="gait_sessions",
+        lazy="selectin",
+    )
     metrics_snapshots: Mapped[list["MetricsSnapshot"]] = relationship(  # noqa: F821
-        "MetricsSnapshot", back_populates="gait_session", cascade="all, delete-orphan"
+        "MetricsSnapshot",
+        back_populates="gait_session",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )

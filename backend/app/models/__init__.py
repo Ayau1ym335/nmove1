@@ -1,4 +1,4 @@
-# app/models/__init__.py
+"""app/models/__init__.py — Import all models so Alembic sees them on Base.metadata."""
 from app.models.user import User, UserRole
 from app.models.session import AuthSession
 from app.models.gait_session import GaitSession

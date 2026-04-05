@@ -1,5 +1,11 @@
-"""app/models/session.py — Auth refresh token sessions table."""
+"""app/models/session.py — Auth refresh token sessions table.
+
+Each row represents one active refresh token (stored as its SHA-256 hash).
+Rows are deleted on logout or token rotation. The ``expires_at`` column
+allows background cleanup of expired tokens.
+"""
 import uuid
+from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
@@ -10,14 +16,7 @@ from app.db.base import Base
 
 
 class AuthSession(Base):
-    """Stores the SHA-256 hash of each opaque refresh token.
-
-    One row = one active refresh token.  Rows are deleted on logout or
-    rotation.  The ``expires_at`` column allows background cleanup of
-    expired tokens.
-    """
-
-    __tablename__ = "auth_sessions"
+    __tablename__ = "sessions"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -32,14 +31,22 @@ class AuthSession(Base):
         index=True,
     )
     token_hash: Mapped[str] = mapped_column(
-        String(64),   # SHA-256 hex digest = 64 chars
+        String(64),    # SHA-256 hex digest = 64 hex characters
         nullable=False,
         unique=True,
-        index=True,
     )
-    expires_at: Mapped[str] = mapped_column(DateTime(timezone=True), nullable=False)
-    created_at: Mapped[str] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
     )
 
-    user: Mapped["User"] = relationship("User", back_populates="auth_sessions")  # noqa: F821
+    # Relationship — lazy="selectin" for async safety
+    user: Mapped["User"] = relationship(  # noqa: F821
+        "User",
+        back_populates="auth_sessions",
+        lazy="selectin",
+    )

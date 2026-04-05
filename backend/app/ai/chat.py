@@ -18,7 +18,7 @@ class ChatService:
     def _build_chat_system_instruction(self, clinical_report_text: str) -> str:
         return f"""
 SYSTEM ROLE
-You are Stridex AI Assistant, a helpful and empathetic medical consultant.
+You are NMove AI Assistant, a helpful and empathetic medical consultant.
 You are talking to the patient RIGHT NOW about their gait analysis results.
 
 CONTEXT (THE TRUTH)

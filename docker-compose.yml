@@ -2,34 +2,35 @@ services:
 
   db:
     image: timescale/timescaledb:latest-pg15
-    container_name: stridex_db
+    container_name: nmove_db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Ayaulym^2011}
-      POSTGRES_DB: ${POSTGRES_DB:-stridex}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-nmove}
     ports:
       - "5433:5432"
     volumes:
-      - stridex_db:/var/lib/postgresql/data
+      - nmove_db:/var/lib/postgresql/data
     networks:
-      - stridex_net
+      - nmove_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-stridex}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-nmove}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
 
   redis:
     image: redis:7-alpine
-    container_name: stridex_redis
+    container_name: nmove_redis
     restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
-      - stridex_redis:/data
+      - nmove_redis:/data
     networks:
-      - stridex_net
+      - nmove_net
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -38,19 +39,19 @@ services:
 
   minio:
     image: minio/minio:latest
-    container_name: stridex_minio
+    container_name: nmove_minio
     restart: unless-stopped
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-stridex_admin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-stridex_minio_secret}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-nmove_admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-nmove_minio_secret}
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - stridex_minio:/data
+      - nmove_minio:/data
     command: server /data --console-address ":9001"
     networks:
-      - stridex_net
+      - nmove_net
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
@@ -59,68 +60,61 @@ services:
 
   n8n:
     image: n8nio/n8n:latest
-    container_name: stridex_n8n
+    container_name: nmove_n8n
     restart: unless-stopped
     ports:
       - "5678:5678"
     environment:
       N8N_BASIC_AUTH_ACTIVE: "true"
       N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:-admin}
-      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD:-n8n_secret_password}
-      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:-stridex_n8n_enc_key_2024}
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD:-changeme}
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:-changeme_enc_key}
       DB_TYPE: postgresdb
       DB_POSTGRESDB_HOST: db
       DB_POSTGRESDB_PORT: 5432
-      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:-stridex}
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:-nmove}
       DB_POSTGRESDB_USER: ${POSTGRES_USER:-postgres}
-      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:-Ayaulym^2011}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
       QUEUE_BULL_REDIS_HOST: redis
       QUEUE_BULL_REDIS_PORT: 6379
     volumes:
-      - stridex_n8n:/home/node/.n8n
+      - nmove_n8n:/home/node/.n8n
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     networks:
-      - stridex_net
+      - nmove_net
 
   api:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: stridex_api
+    container_name: nmove_api
     restart: unless-stopped
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-Ayaulym^2011}@db:5432/${POSTGRES_DB:-stridex}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-nmove}
       REDIS_URL: redis://redis:6379/0
-      SECRET_KEY: ${SECRET_KEY:-51839332ecca178ca04e0867313ef88da42072eb56414c1934c851d4757983d7}
-      ALGORITHM: ${ALGORITHM:-HS256}
-      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-15}
-      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
       MINIO_ENDPOINT: minio:9000
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-stridex_admin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-stridex_minio_secret}
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-    volumes:
-      - ./backend:/app
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     networks:
-      - stridex_net
+      - nmove_net
 
 networks:
-  stridex_net:
+  nmove_net:
     driver: bridge
 
 volumes:
-  stridex_db:
-  stridex_redis:
-  stridex_minio:
-  stridex_n8n:
+  nmove_db:
+  nmove_redis:
+  nmove_minio:
+  nmove_n8n:

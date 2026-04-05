@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-# System deps needed by asyncpg / psycopg build tools
+# System deps needed by asyncpg / psycopg2 build tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
@@ -18,4 +18,5 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Run migrations then start the API server (no --reload in production)
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]

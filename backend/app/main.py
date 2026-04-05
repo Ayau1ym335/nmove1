@@ -1,75 +1,82 @@
-from fastapi import Depends, HTTPException, status, FastAPI
+"""app/main.py — FastAPI application entry point for NMove."""
+import logging
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime, timezone
-from typing import Optional
-from pydantic import BaseModel
 
-from data.tables import get_db, WalkingSessions, ActivityType
-from auth import get_current_user, Users
-from routers import contact, payment
-from config import get_settings
+from app.core.config import settings
+from app.core.redis import redis_client
+from app.routers import auth as auth_router_module
 
-settings = get_settings()
+logger = logging.getLogger(__name__)
 
-app = FastAPI()
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
+
+
+# ---------------------------------------------------------------------------
+# Lifespan — startup / shutdown
+# ---------------------------------------------------------------------------
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Run startup checks and clean up on shutdown."""
+    # Startup
+    try:
+        await redis_client.ping()
+        logger.info("Redis connected.")
+    except Exception as exc:  # pragma: no cover
+        logger.error("Redis connection failed: %s", exc)
+
+    yield  # Application is live and serving requests
+
+    # Shutdown (graceful)
+    await redis_client.aclose()
+    logger.info("Redis connection closed.")
+
+
+# ---------------------------------------------------------------------------
+# Application factory
+# ---------------------------------------------------------------------------
+
+app = FastAPI(
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
+    description="NMove gait analysis backend API.",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    lifespan=lifespan,
+)
+
+# ---------------------------------------------------------------------------
+# Middleware
+# ---------------------------------------------------------------------------
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(contact.router)
-app.include_router(payment.router)
+# ---------------------------------------------------------------------------
+# Routers
+# ---------------------------------------------------------------------------
 
-class SessionStartRequest(BaseModel):
-    is_baseline: bool = False
-    notes: Optional[str] = None
+app.include_router(auth_router_module.router)   # prefix="/auth" set inside router
 
-
-class SessionStartResponse(BaseModel):
-    session_id: int
-    start_time: datetime
-    status: str
+# ---------------------------------------------------------------------------
+# Health check
+# ---------------------------------------------------------------------------
 
 
-@app.post("/api/sessions/start", response_model=SessionStartResponse, status_code=status.HTTP_201_CREATED)
-async def start_session(
-    request: SessionStartRequest,
-    current_user: Users = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    POST /api/sessions/start 
-    """
-    try:
-        # Создаем новую сессию
-        session = WalkingSessions(
-            user_id=current_user.id,
-            start_time=datetime.now(timezone.utc),
-            is_baseline=request.is_baseline,
-            is_processed=False,
-            notes=request.notes,
-            activity_type=ActivityType.NONE  # Default activity type
-        )
-        
-        # Сохраняем в БД
-        db.add(session)
-        await db.commit()
-        await db.refresh(session)
-        
-        # Возвращаем ответ
-        return SessionStartResponse(
-            session_id=session.id,
-            start_time=session.start_time,
-            status="recording"
-        )
-    
-    except Exception as e:
-        await db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ошибка при создании сессии: {str(e)}"
-        )
+@app.get("/health", tags=["Health"], summary="Service liveness probe")
+async def health() -> dict:
+    """Return a simple liveness response including the current environment."""
+    return {"status": "ok", "env": settings.APP_ENV}
