@@ -6,6 +6,11 @@ WORKDIR /app
 # Install psycopg2 system deps (needed for sync Celery DB access)
 RUN apt-get update && apt-get install -y \
     libpq-dev gcc \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libharfbuzz0b \
+    libfontconfig1 \
+    libgdk-pixbuf2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

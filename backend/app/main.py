@@ -10,6 +10,9 @@ from app.core.config import settings
 from app.core.redis import redis_client
 from app.routers import auth as auth_router_module
 from app.routers.sessions import router as sessions_router
+from app.routers.dashboard import router as dashboard_router
+from app.routers.trends import router as trends_router
+from app.routers.doctor import router as doctor_router
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +77,9 @@ app.add_middleware(
 
 app.include_router(auth_router_module.router)   # prefix="/auth" set inside router
 app.include_router(sessions_router)             # prefix="/sessions" set inside router
+app.include_router(dashboard_router)            # prefix="/dashboard" set inside router
+app.include_router(trends_router)               # prefix="/trends" set inside router
+app.include_router(doctor_router)               # prefix="/doctor" set inside router
 
 # ---------------------------------------------------------------------------
 # Health check

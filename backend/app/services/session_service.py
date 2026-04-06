@@ -140,6 +140,11 @@ async def assign_doctor_to_session(
     session.doctor_id = doctor_id
     await db.commit()
     await db.refresh(session)
+    
+    from app.core.cache import cache_delete, cache_delete_pattern
+    await cache_delete(f"doctor:patients:{doctor_id}")
+    await cache_delete_pattern(f"doctor:patient_detail:{doctor_id}:{session.user_id}:*")
+    
     return session
 
 def sync_update_session_status(

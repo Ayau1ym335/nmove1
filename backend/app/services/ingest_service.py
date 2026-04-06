@@ -113,9 +113,17 @@ async def write_readings(
     )
 
     from app.tasks.process_session import process_session
+    from app.core.cache import invalidate_user_dashboard, cache_delete_pattern, cache_delete
 
     task_result = process_session.delay(str(gait_session.id))
     logger.info(f"Enqueued process_session task: task_id={task_result.id} session={gait_session.id}")
+    
+    await invalidate_user_dashboard(str(gait_session.user_id))
+    await cache_delete_pattern(f"trends:{gait_session.user_id}:*")
+    if gait_session.doctor_id is not None:
+        await cache_delete(f"doctor:patients:{gait_session.doctor_id}")
+        await cache_delete_pattern(f"doctor:patient_detail:{gait_session.doctor_id}:{gait_session.user_id}:*")
+
 
     # Store task_id on the session row for polling
     await db.execute(

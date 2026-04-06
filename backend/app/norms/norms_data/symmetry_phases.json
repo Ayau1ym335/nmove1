@@ -1,0 +1,40 @@
+{
+  "metrics": {
+    "step_symmetry_ratio": {
+      "lower_is_better": false,
+      "deviation_metric": false,
+      "groups": {
+        "20": {"mean": 0.98, "sd": 0.03},
+        "30": {"mean": 0.97, "sd": 0.03},
+        "40": {"mean": 0.96, "sd": 0.04},
+        "50": {"mean": 0.94, "sd": 0.05},
+        "60": {"mean": 0.91, "sd": 0.06},
+        "70": {"mean": 0.87, "sd": 0.08}
+      }
+    },
+    "stance_phase_pct": {
+      "lower_is_better": false,
+      "deviation_metric": true,
+      "groups": {
+        "20": {"mean": 61.0, "sd": 2.0},
+        "30": {"mean": 61.5, "sd": 2.2},
+        "40": {"mean": 62.0, "sd": 2.5},
+        "50": {"mean": 63.0, "sd": 3.0},
+        "60": {"mean": 64.5, "sd": 3.5},
+        "70": {"mean": 66.0, "sd": 4.0}
+      }
+    },
+    "double_support_pct": {
+      "lower_is_better": true,
+      "deviation_metric": false,
+      "groups": {
+        "20": {"mean": 11.0, "sd": 2.0},
+        "30": {"mean": 11.5, "sd": 2.2},
+        "40": {"mean": 12.0, "sd": 2.5},
+        "50": {"mean": 13.5, "sd": 3.0},
+        "60": {"mean": 16.0, "sd": 3.5},
+        "70": {"mean": 20.0, "sd": 4.5}
+      }
+    }
+  }
+}

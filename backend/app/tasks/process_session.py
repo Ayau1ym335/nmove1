@@ -8,6 +8,7 @@ from app.db.sync_session import get_sync_db
 from app.models.gait_session import GaitSession
 from app.models.gait_reading import GaitReading
 from app.models.metrics_snapshot import MetricsSnapshot
+from app.models.user import User
 from app.models.exercise import Exercise
 from app.services.metrics_service import compute_gait_metrics
 from app.services.movement_age_service import compute_movement_age
@@ -42,8 +43,14 @@ def process_session(self, session_id: str) -> dict:
                 logger.warning(f"Session {session_id} not found, skipping processing")
                 return {"status": "skipped", "reason": "session_not_found"}
 
+            filters = [GaitReading.gait_session_id == UUID(session_id)]
+            if getattr(session, 'started_at', None):
+                filters.append(GaitReading.time >= session.started_at)
+            if getattr(session, 'ended_at', None):
+                filters.append(GaitReading.time <= session.ended_at)
+
             readings = db.query(GaitReading)\
-                .filter(GaitReading.gait_session_id == UUID(session_id))\
+                .filter(*filters)\
                 .order_by(GaitReading.time.asc())\
                 .all()
 
@@ -56,47 +63,62 @@ def process_session(self, session_id: str) -> dict:
                 )
                 return {"status": "skipped", "reason": "insufficient_readings", "count": len(readings)}
 
-            metrics = compute_gait_metrics(readings)
-            movement_age = compute_movement_age(metrics, session)
-            interpretation = compute_interpretation(metrics, movement_age)
+            user = db.query(User).filter(User.id == session.user_id).first()
+            bio_age = user.bio_age if user else None
 
+            metrics = compute_gait_metrics(readings)
+            movement_age_result = compute_movement_age(metrics, bio_age)
+            interpretation = compute_interpretation(metrics, movement_age_result)
+
+            # NOTE ON METRICS SNAPSHOT: `domain_scores` and `composite_score` do not exist on the table.
+            # We are injecting the relevant movement_age mappings into existing stable DB columns without a migration.
             snapshot = MetricsSnapshot(
                 gait_session_id=UUID(session_id),
                 cadence=metrics["cadence"],
-                symmetry_score=metrics["symmetry_score"],
-                stability_score=metrics["stability_score"],
-                movement_age=movement_age["movement_age"],
-                bio_age=movement_age["bio_age"],
-                movement_age_delta=movement_age["delta"],
+                symmetry_score=metrics["step_symmetry_ratio"],
+                stability_score=movement_age_result["composite_score"],
+                movement_age=movement_age_result["movement_age"],
+                bio_age=movement_age_result["bio_age"],
+                movement_age_delta=movement_age_result["delta"],
                 interpretation_status=interpretation["status"],
             )
             db.add(snapshot)
             db.flush()   
 
-            for ex in interpretation["exercises"]:
+            for ex in interpretation.get("exercises", []):
                 exercise = Exercise(
                     metrics_snapshot_id=snapshot.id,
                     title=ex["title"],
                     description=ex["description"],
                     difficulty=ex["difficulty"],
-                    duration_minutes=ex.get("duration_minutes", None),
                 )
                 db.add(exercise)
             db.commit()
             
         sync_update_session_status(session_id, "done", reading_count=len(readings))
+        
+        try:
+            from app.services.n8n_service import trigger_webhook_fire_and_forget
+            trigger_webhook_fire_and_forget("session-complete", {
+                "session_id": session_id,
+                "movement_age": movement_age_result["movement_age"],
+                "interpretation": interpretation["status"]
+            })
+        except Exception:
+            pass
 
         return {
             "status": "processed",
             "session_id": session_id,
             "readings_processed": len(readings),
             "cadence": metrics["cadence"],
-            "symmetry_score": metrics["symmetry_score"],
-            "stability_score": metrics["stability_score"],
-            "movement_age": movement_age["movement_age"],
+            "symmetry_score": metrics["step_symmetry_ratio"],
+            "stability_score": movement_age_result["composite_score"],
+            "movement_age": movement_age_result["movement_age"],
             "interpretation_status": interpretation["status"],
-            "exercises_created": len(interpretation["exercises"]),
+            "exercises_created": len(interpretation.get("exercises", [])),
         }
+        
     except Exception as exc:
         sync_update_session_status(
             session_id, "error", 
@@ -136,5 +158,10 @@ def close_and_process(self, session_id: str) -> dict:
                 "duration_seconds": duration
             }
     except Exception as exc:
+        from app.services.session_service import sync_update_session_status
+        sync_update_session_status(
+            session_id, "error", 
+            error_message=f"close_and_process failed: {str(exc)[:500]}"
+        )
         logger.exception(f"close_and_process failed for {session_id}: {exc}")
         raise self.retry(exc=exc, countdown=10 * (self.request.retries + 1))
