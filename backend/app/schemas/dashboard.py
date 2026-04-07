@@ -93,3 +93,12 @@ class DashboardSummary(BaseModel):
     # Session count
     total_sessions: int
     sessions_this_week: int
+
+    # ML / Anomaly detection
+    personal_baseline_available: bool = False
+    anomaly_score: float | None = None
+    is_anomaly: bool | None = None
+
+    # AI commentary (Gemini)
+    gemini_insight: str | None = None
+    gemini_insight_audience: Literal["patient", "doctor"] | None = None

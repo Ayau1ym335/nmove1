@@ -6,6 +6,7 @@ from app.models.gait_session import GaitSession
 from app.models.gait_reading import GaitReading
 from app.models.metrics_snapshot import MetricsSnapshot, InterpretationStatus
 from app.models.exercise import Exercise, ExerciseDifficulty
+from app.models.user_model import UserModel
 
 __all__ = [
     "User",
@@ -17,4 +18,5 @@ __all__ = [
     "InterpretationStatus",
     "Exercise",
     "ExerciseDifficulty",
+    "UserModel",
 ]

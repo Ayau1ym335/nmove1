@@ -13,6 +13,7 @@ from app.models.user import User
 from app.models.gait_session import GaitSession
 from app.models.metrics_snapshot import MetricsSnapshot
 from app.models.exercise import Exercise
+from app.models.user_model import UserModel
 
 from app.core.cache import dashboard_cache_key, cache_get, cache_set, redis_client
 from app.schemas.dashboard import (
@@ -96,6 +97,15 @@ async def get_dashboard_summary(
     latest_session = latest_session_result.scalar_one_or_none()
 
     if not latest_session:
+        # Check whether a trained model exists for this user
+        user_model_result = await db.execute(
+            select(UserModel)
+            .where(UserModel.user_id == user_id)
+            .order_by(UserModel.trained_at.desc())
+            .limit(1)
+        )
+        baseline_available = user_model_result.scalar_one_or_none() is not None
+
         summary = DashboardSummary(
             user_id=user_id,
             generated_at=datetime.utcnow(),
@@ -112,6 +122,7 @@ async def get_dashboard_summary(
             latest_session_status=None,
             total_sessions=0,
             sessions_this_week=0,
+            personal_baseline_available=baseline_available,
         )
         await cache_set(cache_key, summary.model_dump(), ttl=60)
         return summary
@@ -260,6 +271,35 @@ async def get_dashboard_summary(
     if hasattr(overall_status, "value"):
         overall_status = overall_status.value
 
+    # ── ML / Anomaly fields ──────────────────────────────────────────────────
+    user_model_result = await db.execute(
+        select(UserModel)
+        .where(UserModel.user_id == user_id)
+        .order_by(UserModel.trained_at.desc())
+        .limit(1)
+    )
+    baseline_available = user_model_result.scalar_one_or_none() is not None
+
+    a_score   = getattr(snapshot, "anomaly_score", None) if snapshot else None
+    a_flag    = getattr(snapshot, "is_anomaly",    None) if snapshot else None
+
+    # ── Gemini insight (patient audience; doctor portal fetches separately) ──
+    gemini_text: str | None = None
+    if snapshot and baseline_available:
+        try:
+            from app.ml.gemini import get_gait_insight
+            from app.services.trend_service import get_user_trends
+            trend_result = await get_user_trends(db, user_id, 30, ["movement_age"])
+            trend_dir = (
+                trend_result.series[0].trend_direction
+                if trend_result.series else None
+            )
+            gemini_text = await get_gait_insight(
+                user_id, snapshot, trend_dir, audience="patient"
+            )
+        except Exception:
+            logger.warning("Gemini insight failed for user=%s (non-fatal)", user_id)
+
     summary = DashboardSummary(
         user_id=user_id,
         generated_at=datetime.utcnow(),
@@ -277,6 +317,11 @@ async def get_dashboard_summary(
         exercises=[ExerciseOut.model_validate(e) for e in exercises_db],
         total_sessions=total_count or 0,
         sessions_this_week=week_count or 0,
+        personal_baseline_available=baseline_available,
+        anomaly_score=a_score,
+        is_anomaly=a_flag,
+        gemini_insight=gemini_text,
+        gemini_insight_audience="patient" if gemini_text else None,
     )
 
     await cache_set(cache_key, summary.model_dump(), ttl=300)

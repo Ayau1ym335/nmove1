@@ -70,7 +70,7 @@ class SessionHistory(BaseModel):
     has_more:   bool
 
 from datetime import date
-from app.schemas.trends import ChartPoint, MetricTrendSeries # Re-using ChartPoint style if exists, or inline it. TrendDataPoint exists, ChartPoint is effectively the same.
+
 class ChartPoint(BaseModel):
     date:          date
     value:         float | None

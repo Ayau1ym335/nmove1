@@ -7,30 +7,35 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.trends import TrendsResponse, MetricTrendSeries, TrendDataPoint
 
-# Map allowed metric keys to their SQL representation
-# Since some domains (e.g. stride_time_cv) are not physically backed by columns in metrics_snapshots,
-# we map them to NULL so the query runs and gracefully returns null data.
+# Map allowed metric keys to their SQL column in metrics_snapshots (aliased as ms)
 METRIC_COLUMN_MAP = {
     "movement_age":        "ms.movement_age",
     "symmetry_score":      "ms.symmetry_score",
     "stability_score":     "ms.stability_score",
     "cadence":             "ms.cadence",
-    "stride_time_cv":      "NULL",
-    "trunk_sway_rms":      "NULL",
-    "hip_rotation_rom":    "NULL",
-    "ankle_pushoff_proxy": "NULL",
+    "stride_time_cv":      "ms.stride_time_cv",
+    "trunk_sway_rms":      "ms.trunk_sway_rms",
+    "hip_rotation_rom":    "ms.hip_rotation_rom",
+    "ankle_pushoff_proxy": "ms.ankle_pushoff_proxy",
+    "anomaly_score":       "ms.anomaly_score",
+    "avg_speed":           "ms.avg_speed",
+    "stride_length":       "ms.stride_length",
 }
 
 METRIC_LABELS = {
-    "movement_age":        ("Movement Age", "years", True),  # lower forms = True
-    "symmetry_score":      ("Symmetry", "ratio", False),
-    "stability_score":     ("Stability", "score", False),
-    "cadence":             ("Basic Cadence", "steps/min", False),
-    "stride_time_cv":      ("Stride Consistency", "score", True),
-    "trunk_sway_rms":      ("Trunk Sway", "score", True),
-    "hip_rotation_rom":    ("Hip Mobility", "deg", False),
-    "ankle_pushoff_proxy": ("Ankle Pushoff", "score", False),
+    "movement_age":        ("Movement Age",       "years",    True),
+    "symmetry_score":      ("Symmetry",           "ratio",    False),
+    "stability_score":     ("Stability",          "score",    False),
+    "cadence":             ("Cadence",            "steps/min",False),
+    "stride_time_cv":      ("Stride Consistency", "CV%",      True),
+    "trunk_sway_rms":      ("Trunk Sway",         "m/s²",     True),
+    "hip_rotation_rom":    ("Hip Mobility",       "deg",      False),
+    "ankle_pushoff_proxy": ("Ankle Pushoff",      "m/s²",     False),
+    "anomaly_score":       ("Anomaly Score",      "0–1",      True),
+    "avg_speed":           ("Avg Speed",          "m/s",      False),
+    "stride_length":       ("Stride Length",      "m",        False),
 }
+
 
 
 async def fetch_metric_series(

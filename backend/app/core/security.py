@@ -3,32 +3,28 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta
 
+import bcrypt
 from fastapi import HTTPException, status
 from jose import ExpiredSignatureError, JWTError, jwt
-from passlib.context import CryptContext
 
 from app.core.config import settings
 
 # ---------------------------------------------------------------------------
-# Password hashing
+# Password hashing (direct bcrypt — passlib 1.7.4 is incompatible with bcrypt >= 4)
 # ---------------------------------------------------------------------------
-# Rounds read from settings (OWASP-recommended minimum is 12).
-_pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__rounds=settings.BCRYPT_ROUNDS,
-)
 
 
 def hash_password(plain: str) -> str:
     """Hash a plain-text password with bcrypt. Returns str."""
-    return _pwd_context.hash(plain)
+    rounds = getattr(settings, "BCRYPT_ROUNDS", 12)
+    salt = bcrypt.gensalt(rounds=rounds)
+    return bcrypt.hashpw(plain.encode("utf-8"), salt).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
     """Return True if plain matches the stored bcrypt hash. Never raises."""
     try:
-        return _pwd_context.verify(plain, hashed)
+        return bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
     except Exception:
         return False
 

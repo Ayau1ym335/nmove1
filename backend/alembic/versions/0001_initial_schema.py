@@ -23,10 +23,7 @@ depends_on = None
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _create_enum(name: str, *values: str) -> None:
-    """Create a PostgreSQL ENUM type if it does not already exist."""
-    enum_type = sa.Enum(*values, name=name)
-    enum_type.create(op.get_bind(), checkfirst=True)
+
 
 
 def _drop_enum(name: str) -> None:
@@ -39,12 +36,6 @@ def _drop_enum(name: str) -> None:
 # ---------------------------------------------------------------------------
 
 def upgrade() -> None:
-    # ------------------------------------------------------------------
-    # 1. Create ENUMs before the tables that use them.
-    # ------------------------------------------------------------------
-    _create_enum("user_role", "patient", "doctor")
-    _create_enum("interpretation_status", "normal", "needs_attention", "improving")
-    _create_enum("exercise_difficulty", "easy", "medium", "hard")
 
     # ------------------------------------------------------------------
     # 2. users
@@ -170,11 +161,11 @@ def upgrade() -> None:
     )
     op.create_index("ix_gait_sessions_user_id", "gait_sessions", ["user_id"])
 
-    # Convert to TimescaleDB hypertable partitioned on started_at.
-    # if_not_exists => TRUE prevents errors when running upgrade twice.
-    op.execute(
-        "SELECT create_hypertable('gait_sessions', 'started_at', if_not_exists => TRUE)"
-    )
+    # NOTE: gait_sessions is NOT converted to a hypertable because TimescaleDB
+    # requires the partition column (started_at) to be part of every UNIQUE
+    # constraint, which conflicts with the UUID-only PK required for FK
+    # references.  gait_readings (the high-volume IMU data) is the real
+    # hypertable and provides all the time-series query performance we need.
 
     # ------------------------------------------------------------------
     # 5. metrics_snapshots
@@ -201,7 +192,7 @@ def upgrade() -> None:
                 "needs_attention",
                 "improving",
                 name="interpretation_status",
-                create_type=False,  # already created above
+                create_type=False,
             ),
             nullable=False,
         ),
@@ -244,7 +235,7 @@ def upgrade() -> None:
             sa.Enum(
                 "easy", "medium", "hard",
                 name="exercise_difficulty",
-                create_type=False,  # already created above
+                create_type=False,
             ),
             nullable=True,
         ),

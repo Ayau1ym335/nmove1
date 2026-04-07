@@ -187,3 +187,116 @@ async def get_report_history(
     import asyncio
     return await asyncio.to_thread(list_patient_reports, patient_id)
 
+
+# ── Anomaly flagging ──────────────────────────────────────────────────────────
+
+from pydantic import BaseModel as _BM
+from datetime import datetime as _dt
+
+class AnomalySession(_BM):
+    session_id: UUID
+    snapshot_id: UUID
+    anomaly_score: float
+    is_anomaly: bool
+    calculated_at: _dt
+    movement_age: float | None
+    cadence: float | None
+
+class AnomalyListResponse(_BM):
+    patient_id: UUID
+    flagged_sessions: list[AnomalySession]
+    total_flagged: int
+
+@router.get(
+    "/patients/{patient_id}/anomalies",
+    response_model=AnomalyListResponse,
+    status_code=200,
+    summary="List all sessions flagged as anomalous for a patient",
+)
+async def get_patient_anomalies(
+    patient_id: UUID,
+    current_user: User = Depends(require_doctor),
+    db: AsyncSession = Depends(get_db),
+) -> AnomalyListResponse:
+    from sqlalchemy import select as _sel
+    from app.models.gait_session import GaitSession as GS
+    from app.models.metrics_snapshot import MetricsSnapshot as MS
+    from fastapi import HTTPException
+
+    valid_res = await db.execute(
+        text("SELECT 1 FROM gait_sessions WHERE user_id = :p AND doctor_id = :d LIMIT 1"),
+        {"p": str(patient_id), "d": str(current_user.id)}
+    )
+    if not valid_res.scalar():
+        raise HTTPException(status_code=403, detail="Not assigned to this patient")
+
+    rows = await db.execute(
+        _sel(MS)
+        .join(GS, GS.id == MS.gait_session_id)
+        .where(GS.user_id == patient_id)
+        .where(MS.is_anomaly == True)          # noqa: E712
+        .order_by(MS.calculated_at.desc())
+    )
+    snapshots = rows.scalars().all()
+    flagged = [
+        AnomalySession(
+            session_id=snap.gait_session_id,
+            snapshot_id=snap.id,
+            anomaly_score=snap.anomaly_score or 0.0,
+            is_anomaly=snap.is_anomaly or False,
+            calculated_at=snap.calculated_at,
+            movement_age=snap.movement_age,
+            cadence=snap.cadence,
+        )
+        for snap in snapshots
+    ]
+    return AnomalyListResponse(
+        patient_id=patient_id,
+        flagged_sessions=flagged,
+        total_flagged=len(flagged),
+    )
+
+
+# ── Gemini clinical insight (doctor audience) ─────────────────────────────────
+
+@router.get(
+    "/patients/{patient_id}/gemini",
+    status_code=200,
+    summary="Get Gemini clinical gait insight for a patient (doctor audience)",
+)
+async def get_patient_gemini_insight(
+    patient_id: UUID,
+    current_user: User = Depends(require_doctor),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    from sqlalchemy import select as _sel
+    from app.models.gait_session import GaitSession as GS
+    from app.models.metrics_snapshot import MetricsSnapshot as MS
+    from app.ml.gemini import get_gait_insight
+    from app.services.trend_service import get_user_trends
+    from fastapi import HTTPException
+
+    valid_res = await db.execute(
+        text("SELECT 1 FROM gait_sessions WHERE user_id = :p AND doctor_id = :d LIMIT 1"),
+        {"p": str(patient_id), "d": str(current_user.id)}
+    )
+    if not valid_res.scalar():
+        raise HTTPException(status_code=403, detail="Not assigned to this patient")
+
+    snap_res = await db.execute(
+        _sel(MS)
+        .join(GS, GS.id == MS.gait_session_id)
+        .where(GS.user_id == patient_id)
+        .where(GS.status == "done")
+        .order_by(MS.calculated_at.desc())
+        .limit(1)
+    )
+    snapshot = snap_res.scalar_one_or_none()
+    if not snapshot:
+        raise HTTPException(status_code=404, detail="No processed sessions found")
+
+    trend_result = await get_user_trends(db, patient_id, 30, ["movement_age"])
+    trend_dir = trend_result.series[0].trend_direction if trend_result.series else None
+
+    insight = await get_gait_insight(patient_id, snapshot, trend_dir, audience="doctor")
+    return {"patient_id": str(patient_id), "audience": "doctor", "insight": insight}

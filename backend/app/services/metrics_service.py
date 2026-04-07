@@ -107,9 +107,13 @@ def compute_gait_metrics(readings: list) -> dict:
         ankle_pushoff_proxy = 0.0
     ankle_pushoff_proxy = float(np.clip(ankle_pushoff_proxy, 0.0, 20.0))
 
+    # Average walking speed (m/s) — total distance / total duration
+    avg_speed = float(np.clip(total_distance / max(duration_s, 1), 0.0, 4.0))
+
     return {
         "cadence": round(cadence, 2),
         "stride_length": round(stride_length, 3),
+        "avg_speed": round(avg_speed, 3),
         "step_symmetry_ratio": round(step_symmetry_ratio, 4),
         "stance_phase_pct": round(stance_phase_pct, 2),
         "double_support_pct": round(double_support_pct, 2),

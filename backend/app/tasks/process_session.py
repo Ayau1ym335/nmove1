@@ -74,8 +74,23 @@ def process_session(self, session_id: str) -> dict:
             # We are injecting the relevant movement_age mappings into existing stable DB columns without a migration.
             snapshot = MetricsSnapshot(
                 gait_session_id=UUID(session_id),
+                # ── Rhythm & Pace ────────────────────────────────────────────────
                 cadence=metrics["cadence"],
+                stride_length=metrics.get("stride_length"),
+                step_count=metrics.get("step_count"),
+                avg_speed=metrics.get("avg_speed"),
+                # ── Joint Mechanics ───────────────────────────────────────────────
+                hip_rotation_rom=metrics.get("hip_rotation_rom"),
+                ankle_pushoff_proxy=metrics.get("ankle_pushoff_proxy"),
+                vertical_oscillation=metrics.get("vertical_oscillation"),
+                # ── Variability ─────────────────────────────────────────────────────────
+                stride_time_cv=metrics.get("stride_time_cv"),
+                trunk_sway_rms=metrics.get("trunk_sway_rms"),
+                # ── Symmetry & Phases ──────────────────────────────────────────────
                 symmetry_score=metrics["step_symmetry_ratio"],
+                stance_phase_pct=metrics.get("stance_phase_pct"),
+                double_support_pct=metrics.get("double_support_pct"),
+                # ── Movement Age & Composite ──────────────────────────────────────────
                 stability_score=movement_age_result["composite_score"],
                 movement_age=movement_age_result["movement_age"],
                 bio_age=movement_age_result["bio_age"],
@@ -96,7 +111,44 @@ def process_session(self, session_id: str) -> dict:
             db.commit()
             
         sync_update_session_status(session_id, "done", reading_count=len(readings))
-        
+
+        # ── ML Anomaly Scoring ────────────────────────────────────────────────────────────
+        # Runs in a fresh DB context immediately after the snapshot is committed.
+        # Updates anomaly_score + is_anomaly on the snapshot row.
+        try:
+            from app.ml.scorer import score_snapshot
+            from app.db.sync_session import get_sync_db
+            from app.models.metrics_snapshot import MetricsSnapshot as MS
+            with get_sync_db() as score_db:
+                fresh_snap = score_db.query(MS).filter(MS.id == snapshot.id).first()
+                if fresh_snap:
+                    a_score, a_flag = score_snapshot(fresh_snap, str(session.user_id))
+                    if a_score is not None:
+                        fresh_snap.anomaly_score = a_score
+                        fresh_snap.is_anomaly    = a_flag
+                        score_db.commit()
+                        logger.info(
+                            "Anomaly score set for session=%s: %.3f (anomaly=%s)",
+                            session_id, a_score, a_flag,
+                        )
+        except Exception:
+            logger.exception(
+                "Anomaly scoring failed for session=%s (non-fatal)", session_id
+            )
+
+        # ── ML Training trigger ──────────────────────────────────────────────────────────
+        # Runs after the snapshot is committed. A fresh DB context is used so
+        # that ML failure never rolls back the main processing transaction.
+        try:
+            from app.ml.trainer import maybe_train_model
+            from app.db.sync_session import get_sync_db
+            with get_sync_db() as ml_db:
+                maybe_train_model(str(session.user_id), ml_db)
+        except Exception:
+            logger.exception(
+                "ML training trigger failed for session=%s (non-fatal)", session_id
+            )
+
         try:
             from app.services.n8n_service import trigger_webhook_fire_and_forget
             trigger_webhook_fire_and_forget("session-complete", {
