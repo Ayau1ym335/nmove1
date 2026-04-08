@@ -1,9 +1,9 @@
-from typing import Any, Dict, List, Optional, cast
+from typing import List, Optional
 from sqlalchemy.orm import Session
 from datetime import datetime
 import google.generativeai as genai
-from app.legacy.data_tables import ChatSession
-from app.ai.analysis import Analysis
+from app.data.tables import ChatSession, Report
+from ai.analysis import AnalysisService
 from app.config import get_settings
 
 settings = get_settings()
@@ -13,12 +13,12 @@ genai.configure(api_key=settings.GEMINI_API_KEY)
 class ChatService:
     def __init__(self, db: Session):
         self.db = db
-        self.analysis_service = Analysis(db)
+        self.analysis_service = AnalysisService(db)
     
     def _build_chat_system_instruction(self, clinical_report_text: str) -> str:
         return f"""
 SYSTEM ROLE
-You are NMove AI Assistant, a helpful and empathetic medical consultant.
+You are Stridex AI Assistant, a helpful and empathetic medical consultant.
 You are talking to the patient RIGHT NOW about their gait analysis results.
 
 CONTEXT (THE TRUTH)
@@ -67,7 +67,7 @@ about their recovery progress.
         user_id: int,
         report_id: Optional[int] = None
     ) -> ChatSession:
-        if report_id is not None:
+        if report_id:
             session = (
                 self.db.query(ChatSession)
                 .filter(
@@ -105,13 +105,13 @@ about their recovery progress.
         if not session:
             raise ValueError(f"Chat session {session_id} not found")
         report_text = ""
-        if session.report_id is not None:
+        if session.report_id:
             try:
-                report_text = self.analysis_service.get_full_analysis_text(cast(int, session.report_id))
+                report_text = self.analysis_service.get_full_analysis_text(session.report_id)
             except Exception as e:
                 report_text = f"[Report data unavailable: {str(e)}]"
         system_instruction = self._build_chat_system_instruction(report_text)
-        history = cast(List[Dict[str, Any]], session.chat_history) if session.chat_history is not None else []
+        history = session.chat_history or []
         model = genai.GenerativeModel(
             model_name=settings.GEMINI_MODEL,
             system_instruction=system_instruction
@@ -139,8 +139,8 @@ about their recovery progress.
             "content": response_text,
             "timestamp": datetime.utcnow().isoformat()
         })
-        setattr(session, "chat_history", history)
-        setattr(session, "updated_at", datetime.utcnow())
+        session.chat_history = history
+        session.updated_at = datetime.utcnow()
         self.db.commit()
         return response_text
     
@@ -148,10 +148,10 @@ about their recovery progress.
         session = self.db.query(ChatSession).filter(ChatSession.id == session_id).first()
         if not session:
             raise ValueError(f"Chat session {session_id} not found")
-        return cast(List[dict], session.chat_history) if session.chat_history is not None else []
+        return session.chat_history or []
     
     def end_session(self, session_id: int) -> None:
         session = self.db.query(ChatSession).filter(ChatSession.id == session_id).first()
         if session:
-            setattr(session, "is_active", False)
+            session.is_active = False
             self.db.commit()

@@ -1,4 +1,3 @@
 {
-    "python-envs.pythonProjects": [],
-    "python.analysis.extraPaths": ["./backend", "backend", "${workspaceFolder}/backend"]
+    "python-envs.pythonProjects": []
 }

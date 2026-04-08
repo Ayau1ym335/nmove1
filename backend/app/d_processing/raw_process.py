@@ -1,18 +1,18 @@
 import numpy as np
-from typing import Optional, Callable, Any, Dict, List, Tuple, Union, cast
+from typing import Optional
 from dataclasses import dataclass, field
 import json
 import os
 import datetime
 
-from .unpacking import unpack_bin as unpack_bin_default
+from .unpacking import unpack_bin
 from .imu_calibration import Calibrator
-from .lowp_f import prefiltration as prefiltration_default, Filter 
+from .lowp_f import prefiltration, Filter 
 from .madgwick import MadgwickAHRS
 from .step_detection import StepDetector
 from .quaternion import Quaternion
 from .detect_act import ActivityDetector
-from .step_pro import calculate_step_metrics as calculate_step_metrics_default
+from .step_pro import calculate_step_metrics
 from .session_pro import calculate_session_summary
 from .dclass import Metadata
 
@@ -38,31 +38,31 @@ def quaternion_to_euler(q: np.ndarray) -> np.ndarray:
 class GaitAnalysisOrchestrator:
     def __init__(
         self,
-        unpack_bin: Optional[Callable[[str], np.ndarray]] = None,
-        calibrator: Optional[Calibrator] = None,
-        prefiltration: Optional[Callable[[np.ndarray], np.ndarray]] = None,
-        activity_detector: Optional[ActivityDetector] = None,
-        filter: Optional[Filter] = None,
-        event_detector: Optional[StepDetector] = None,
-        calculate_step_metrics: Optional[Callable[[np.ndarray, np.ndarray, List[Any]], List[Dict[str, Any]]]] = None,
-        session: Optional[Callable[[List[Dict[str, Any]], np.ndarray, Any, Metadata], Dict[str, Any]]] = None,
+        unpack_bin= None,
+        calibrator=Calibrator(),
+        prefiltration= None,
+        activity_detector=ActivityDetector(),
+        filter=Filter(),
+        event_detector=StepDetector(),
+        calculate_step_metrics= None,
+        session = None,
         sampling_rate: int = 125
     ):
-        self.unpacking = unpack_bin or unpack_bin_default
-        self.calibrator = calibrator or Calibrator()
-        self.prefiltration = prefiltration or prefiltration_default
-        self.activity_detector = activity_detector or ActivityDetector()
-        self.filter = filter or Filter()
-        self.event_detector = event_detector or StepDetector()
-        self.calculate_step_metrics = calculate_step_metrics or calculate_step_metrics_default
-        self.session = session or calculate_session_summary
+        self.unpacking = unpack_bin
+        self.calibrator = calibrator
+        self.prefiltration = prefiltration
+        self.activity_detector = activity_detector
+        self.filter = filter
+        self.event_detector = event_detector
+        self.calculate_step_metrics = calculate_step_metrics
+        self.session = session
         self.sampling_rate = sampling_rate
         self.dt = 1.0 / sampling_rate
         
         self.madgwick_thigh = MadgwickAHRS(sampleperiod=self.dt, beta=0.1)
         self.madgwick_shank = MadgwickAHRS(sampleperiod=self.dt, beta=0.1)
     
-    def process_session(self, raw_data: Union[str, np.ndarray], metadata: Metadata, device_id: Optional[str] = None) -> Union[Dict[str, Any], str]:
+    def process_session(self, raw_data, metadata, device_id: str = None):
         if device_id is None:
             if isinstance(raw_data, str):
                 device_id = os.path.splitext(os.path.basename(raw_data))[0]
@@ -76,7 +76,6 @@ class GaitAnalysisOrchestrator:
                 unpacked = raw_data
         except Exception as e:
             unpacked = raw_data
-        unpacked = cast(np.ndarray, unpacked)
 
         try:
             self.calibrator.load(device_id)
@@ -116,7 +115,7 @@ class GaitAnalysisOrchestrator:
             return ' Have an error: {e}'
         
         try:
-            session_summary = self.session(metrics_list, orientations, activities, metadata)
+            session_summary = self.session.calculate_session_summary(metrics_list, orientations, activities, metadata)
         except Exception as e:
             return ' Have an error: {e}'
 

@@ -1,6 +1,5 @@
 import numpy as np
 import numbers
-from typing import Any, Union
 
 class Quaternion:
     def __init__(self, w_or_q, x=None, y=None, z=None):
@@ -20,7 +19,7 @@ class Quaternion:
 
     # Quaternion specific interfaces
 
-    def conj(self) -> "Quaternion":
+    def conj(self):
         return Quaternion(self._q[0], -self._q[1], -self._q[2], -self._q[3])
 
     def to_angle_axis(self):
@@ -59,7 +58,7 @@ class Quaternion:
         yaw = np.arctan2(-2 * (self[1] * self[2] - self[0] * self[3]), self[0] ** 2 + self[1] ** 2 - self[2] ** 2 - self[3] ** 2)
         return roll, pitch, yaw
 
-    def __mul__(self, other: Union["Quaternion", numbers.Number]) -> "Quaternion":
+    def __mul__(self, other):
         if isinstance(other, Quaternion):
             w = self._q[0]*other._q[0] - self._q[1]*other._q[1] - self._q[2]*other._q[2] - self._q[3]*other._q[3]
             x = self._q[0]*other._q[1] + self._q[1]*other._q[0] + self._q[2]*other._q[3] - self._q[3]*other._q[2]
@@ -70,9 +69,8 @@ class Quaternion:
         elif isinstance(other, numbers.Number):
             q = self._q * other
             return Quaternion(q)
-        raise TypeError("Quaternion multiplication supports Quaternion or numeric scalar only")
 
-    def __add__(self, other: Union["Quaternion", np.ndarray, list]) -> "Quaternion":
+    def __add__(self, other):
         if not isinstance(other, Quaternion):
             if len(other) != 4:
                 raise TypeError("Quaternions must be added to other quaternions or a 4-element array")
@@ -83,15 +81,15 @@ class Quaternion:
         return Quaternion(q)
 
     @property
-    def q(self) -> np.ndarray:
+    def q(self):
         return self._q
 
     @q.setter
-    def q(self, q: np.ndarray) -> None:
+    def q(self, q):
         self._q = q
 
-    def __getitem__(self, item: Any) -> Any:
+    def __getitem__(self, item):
         return self._q[item]
 
-    def __array__(self) -> np.ndarray:
+    def __array__(self):
         return self._q

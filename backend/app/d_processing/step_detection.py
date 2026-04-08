@@ -160,7 +160,7 @@ class StepDetector:
         
         if len(minima) == 0:
             min_idx = np.argmin(gyro_window)
-            return int(search_start + int(min_idx))
+            return search_start + min_idx
         
         to_idx_relative = minima[-1]
         return search_start + to_idx_relative

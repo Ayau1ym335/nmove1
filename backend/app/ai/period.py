@@ -1,9 +1,10 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import and_, desc
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional, cast
-import numpy as np 
-from app.legacy.data_tables import ProgressSnapshot
+from typing import Dict, List, Optional
+import numpy as np # Нам понадобится numpy для корреляции
+from app.data.constants import ALL_METRICS_LIST, METRIC_DOMAINS_MAP
+from app.data.tables import Report, ProgressSnapshot
 
 class PeriodAggregator:
     def __init__(self, db: Session, user_id: int):
@@ -87,9 +88,9 @@ class PeriodAggregator:
         if not snapshots: return {}
         count = len(snapshots)
         
-        avg_score = sum(cast(float, s.avg_overall_score) for s in snapshots if s.avg_overall_score is not None) / count
-        avg_gvi = sum(cast(float, s.avg_gvi_score) for s in snapshots if s.avg_gvi_score is not None) / count
-        avg_pain = sum(float(getattr(s, 'avg_pain_level', 0) or 0) for s in snapshots) / count
+        avg_score = sum(s.avg_overall_score for s in snapshots) / count
+        avg_gvi = sum(s.avg_gvi_score for s in snapshots) / count
+        avg_pain = sum(getattr(s, 'avg_pain_level', 0) for s in snapshots) / count
         
         avg_rom = 0 # Пример, если нужно вытаскивать из json
         # (Тут можно добавить логику распаковки avg_domain_scores, если нужно)

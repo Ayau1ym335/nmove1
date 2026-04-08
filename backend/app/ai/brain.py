@@ -25,8 +25,6 @@ class Brain:
     
     def _read(self, file_path: str) -> str:
         text = ""
-        if PdfReader is None:
-            return text
         try:
             reader = PdfReader(file_path)
             for page in reader.pages:
@@ -36,9 +34,6 @@ class Brain:
         except Exception as e:
             print(f"Error reading PDF {file_path}: {e}")
         return text
-
-    def _read_pdf(self, file_path: str) -> str:
-        return self._read(file_path)
     
     def _load(self) -> None:
         books_folder = settings.BOOKS_FOLDER
@@ -61,14 +56,11 @@ class Brain:
                             self.db_context += f.read()
                     except Exception as e:
                         print(f"Error reading JSON {path}: {e}")
-
-    def _load_knowledge_base(self) -> None:
-        self._load()
     
     def _build_system_prompt(self) -> str:
         return f"""
 SYSTEM ROLE & AUTHORITY HIERARCHY
-You are NMove AI, an expert gait analysis system.
+You are Stridex AI, an expert gait analysis system.
 YOUR KNOWLEDGE BASE (PRIORITIES):
 You must generate answers following a strict source hierarchy:
 1. [MAIN SOURCE] (User Library) — Highest authority.
@@ -203,7 +195,7 @@ OUTPUT FORMAT
 - Statistics from the database: Similar cases found: [X]
 2. Personalized Target
 - Target: …
-3. NMove Conclusion
+3. Stridex Conclusion
 -Executive Summary (The Narrative): Write ONE paragraph combining all data.
 - Status: …
 - Key Conflicts & Wins: Only mention metrics if they interact meaningfully (e.g., "Speed is up, BUT at the cost of Symmetry"). Ignore minor deviations.

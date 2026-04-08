@@ -1,19 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import Any, cast
-from app.legacy.data_tables import get_db, Profiles
+from app.data.tables import get_db
+from app.routers.schemas import ReportCreate, ReportResponse
 from app.ai.analysis import Analysis 
 
 router = APIRouter(prefix="/api/baseline", tags=["Baseline"])
 @router.post("/record")
 def record_baseline(
-    report_data: Any,
+    report_data: ReportCreate, 
     db: Session = Depends(get_db)
 ):
     analyzer = Analysis(db)
     try:
         new_report = analyzer.generate_report(report_data)
-        analyzer.set_baseline(report_id=cast(int, new_report.id), user_id=report_data.user_id)
+        analyzer.set_baseline(report_id=new_report.id, user_id=report_data.user_id)
         return {
             "status": "success",
             "message": "Baseline successfully recorded",
@@ -33,7 +33,7 @@ def record_baseline(
 def get_user_baseline(user_id: int, db: Session = Depends(get_db)):
     profile = db.query(Profiles).filter(Profiles.id == user_id).first()
     
-    if not profile or profile.baseline_report_id is None:
+    if not profile or not profile.baseline_report_id:
         return {
             "has_baseline": False, 
             "message": "Baseline not recorded yet. Please use /api/baseline/record first."

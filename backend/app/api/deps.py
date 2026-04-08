@@ -1,10 +1,10 @@
+from typing import Generator
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import cast
-from app.legacy.data_tables import get_db, Users, Report, ChatSession
+from app.data.tables import get_db, Users, Report, ChatSession
 
-def get_user_or_404(user_id: int, db: Session = Depends(get_db)) -> Users:
-    user = db.query(Users).filter(Users.id == user_id).first()
+def get_user_or_404(user_id: int, db: Session = Depends(get_db)) -> User:
+    user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -34,7 +34,7 @@ def get_chat_session_or_404(session_id: int, db: Session = Depends(get_db)) -> C
 
 
 def validate_user_owns_report(report: Report, user_id: int) -> Report:
-    if cast(int, report.user_id) != user_id:
+    if report.user_id != user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have permission to access this report"

@@ -1,9 +1,9 @@
-from typing import Any, Dict, List, cast
+from typing import Dict, List
 from app.data.constants import METRIC_DOMAINS_MAP, ALL_METRICS_LIST
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import datetime, timezone, date
-from app.legacy.data_tables import Report, ProgressSnapshot
+from app.data.tables import Report, ProgressSnapshot
 import numpy as np
 
 def daily_snapshot(db: Session, user_id: int):
@@ -23,8 +23,8 @@ def daily_snapshot(db: Session, user_id: int):
             if data.get(m) is not None:
                 metrics_collection[m].append(data[m])
 
-    daily_stats: Dict[str, Dict[str, float]] = {}
-    pathology_log: List[Dict[str, Any]] = []
+    daily_stats = {}
+    pathology_log = []
     
     for metric, values in metrics_collection.items():
         if not values: continue
@@ -72,7 +72,7 @@ def daily_snapshot(db: Session, user_id: int):
     # ...Здесь вызываем функцию calculate_domain_scores(median_profile)...
     # (Функция из Дня 1, которая возвращает 0-100 для 4 доменов)
     # Для примера:
-    radar_domains: Dict[str, float] = {
+    radar_domains = {
         "rhythm": 85.0, "mechanics": 70.0, "stability": 60.0, "symmetry": 90.0
     }
 
@@ -82,15 +82,11 @@ def daily_snapshot(db: Session, user_id: int):
         snapshot = ProgressSnapshot(user_id=user_id, date=today)
         db.add(snapshot)
     
-    overall_scores = [cast(float, r.overall_score) for r in reports if r.overall_score is not None]
-    avg_overall = round(float(np.mean(overall_scores)), 1) if overall_scores else 0.0
-    gvi_median = float(daily_stats.get("gvi", {}).get("median", 0.0))
-
-    setattr(snapshot, "daily_stats", daily_stats)
-    setattr(snapshot, "radar_domains", radar_domains)
-    setattr(snapshot, "pathology_log", pathology_log)
-    setattr(snapshot, "avg_overall_score", avg_overall)
-    setattr(snapshot, "avg_gvi_score", gvi_median) # Лучше брать медиану GVI
+    snapshot.daily_stats = daily_stats
+    snapshot.radar_domains = radar_domains
+    snapshot.pathology_log = pathology_log
+    snapshot.avg_overall_score = round(float(np.mean([r.overall_score for r in reports])), 1)
+    snapshot.avg_gvi_score = daily_stats.get("gvi", {}).get("median", 0) # Лучше брать медиану GVI
     
     db.commit()
 

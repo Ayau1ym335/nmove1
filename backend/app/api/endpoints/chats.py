@@ -1,32 +1,18 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Optional
-from datetime import datetime
-from pydantic import BaseModel
-from app.legacy.data_tables import get_db
-from app.ai.chat import ChatService
+from typing import List
+from app.data.tables import get_db
+from app.routers.schemas import ChatRequest, ChatResponse, ChatSessionResponse
+from ai.chat import ChatService
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
-
-class ChatResponse(BaseModel):
-    session_id: int
-    response: str
-    timestamp: datetime
-
-class ChatSessionResponse(BaseModel):
-    id: int
-    user_id: int
-    report_id: Optional[int]
-    session_name: Optional[str]
-    created_at: datetime
-    is_active: bool
 
 
 @router.post("/start", response_model=ChatSessionResponse)
 def start_chat_session(
     user_id: int,
-    report_id: Optional[int] = None,
+    report_id: int = None,
     db: Session = Depends(get_db)
 ):
     chat_service = ChatService(db)
@@ -79,3 +65,4 @@ def get_chat_history(session_id: int, db: Session = Depends(get_db)):
 def end_chat_session(session_id: int, db: Session = Depends(get_db)):
     chat_service = ChatService(db)
     chat_service.end_session(session_id)
+from datetime import datetime

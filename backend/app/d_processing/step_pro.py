@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import numpy as np
 import json
-from typing import List, Dict, Any, Optional, cast
+from typing import List, Dict, Any, Optional
 from scipy.interpolate import interp1d
 from dataclasses import dataclass
 import logging
@@ -15,7 +15,7 @@ def calculate_step_metrics(
     orientations: np.ndarray,
     steps: List[Any], 
     fs: int = 125,
-    metadata: Optional[Metadata] = None
+    metadata: Metadata = None
 ) -> List[Dict[str, Any]]:
     metrics_list = []
     n_samples = len(filtered_data)
@@ -104,14 +104,11 @@ def _calculate_single_step_metrics(
     next_hs_idx: int,
     fs: int,
     step_number: int,
-    metadata: Optional[Metadata] = None
+    metadata: Metadata = None
 ) -> Dict[str, Any]:
     
     time_offset = hs_idx / fs
-    if metadata is not None:
-        step_timestamp = metadata.start_time + timedelta(seconds=time_offset)
-    else:
-        step_timestamp = datetime.utcnow() + timedelta(seconds=time_offset)
+    step_timestamp = metadata.start_time + timedelta(seconds=time_offset)
     
     step_time = (next_hs_idx - hs_idx) / fs
     stance_time = (to_idx - hs_idx) / fs
@@ -233,7 +230,7 @@ def _normalize_to_100_points(signal: np.ndarray) -> List[float]:
             signal,
             kind='linear',
             bounds_error=False,
-            fill_value=cast(Any, "extrapolate")
+            fill_value='extrapolate'
         )
         
         normalized = interpolator(target_time)
