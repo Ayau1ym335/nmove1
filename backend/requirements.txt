@@ -1,0 +1,52 @@
+# NMove backend — Python 3.11+
+
+# ── Web framework ─────────────────────────────────────────────────────────────
+fastapi==0.111.0
+uvicorn[standard]==0.29.0
+
+# ── Database ──────────────────────────────────────────────────────────────────
+sqlalchemy==2.0.30
+asyncpg==0.29.0
+alembic==1.13.1
+psycopg2-binary==2.9.9
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+# python-jose for JWT; bcrypt called directly to avoid passlib/bcrypt breakage
+python-jose[cryptography]==3.3.0
+bcrypt==4.1.3
+
+# ── Redis / Caching ───────────────────────────────────────────────────────────
+redis==5.0.1
+
+# ── Settings / Validation ─────────────────────────────────────────────────────
+pydantic==2.7.1
+pydantic-settings==2.3.1
+email-validator==2.1.1
+
+# ── HTTP client ───────────────────────────────────────────────────────────────
+httpx==0.27.0
+
+# ── Object storage ────────────────────────────────────────────────────────────
+minio==7.2.7
+
+# ── Celery / Task queue ───────────────────────────────────────────────────────
+celery[redis]==5.3.6
+flower==2.0.1
+kombu==5.3.4
+billiard==4.2.0
+
+# ── Scientific computing ──────────────────────────────────────────────────────
+numpy>=1.26.0
+scipy>=1.11.0
+
+# ── ML / PyTorch ──────────────────────────────────────────────────────────────
+# CPU-only wheel to keep image size minimal; GPU not used in workers
+torch==2.4.0
+
+# ── PDF Generation ────────────────────────────────────────────────────────────
+weasyprint==62.3
+jinja2==3.1.4
+
+# ── AI / LLM ─────────────────────────────────────────────────────────────────
+google-generativeai==0.8.3
+ruff==0.4.4

@@ -1,9 +1,10 @@
 import numpy as np
 from typing import List, Dict, Optional, Any
 import logging
-from app.data.tables import SessionStatus
+from app.legacy.data_tables import SessionStatus
 from .dclass import Metadata
 from datetime import timedelta
+from .movement_age import calculate_movement_age
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('SessionSummary')
@@ -12,8 +13,10 @@ def calculate_session_summary(
     metrics_list: List[Dict[str, Any]],
     orientation: np.ndarray,
     activities,
-    session_metadata: Metadata
-) -> Dict[str, Any]:
+    session_metadata: Metadata,
+    chronological_age: Optional[int] = None,
+    baseline_summary: Optional[Dict[str, Any]] = None,
+) -> Optional[Dict[str, Any]]:
     if not metrics_list or len(metrics_list) == 0:
         logger.warning("Empty metrics list - no steps detected.")
         return None
@@ -44,7 +47,6 @@ def calculate_session_summary(
         'is_processed': True,
         'status': SessionStatus.COMPLETED.value,
         'activity_type': activities,
-  -
         'step_count': len(clean_metrics),
         'cadence': basic_stats['cadence'],
         'avg_speed': avg_speed['avg_speed'],
@@ -81,7 +83,13 @@ def calculate_session_summary(
         'avg_impact_force': clinical_stats.get('avg_impact_force'),
         'avg_peak_angular_velocity': clinical_stats.get('avg_peak_angular_velocity'),
     }
-    
+
+    summary['movement_age'] = calculate_movement_age(
+        session_summary=summary,
+        chronological_age=chronological_age,
+        baseline_summary=baseline_summary,
+    )
+
     return summary
 
 
@@ -124,7 +132,7 @@ def _calculate_basic_temporal_stats(metrics_list: List[Dict]) -> Dict[str, float
         'stance_swing_ratio': round(stance_swing_ratio, 3)
     }
 
-def _calculate_kinematic_aggregation(metrics_list: List[Dict]) -> Dict[str, Optional[float]]:
+def _calculate_kinematic_aggregation(metrics_list: List[Dict]) -> Dict[str, Any]:
     knee_flexion_max_values = np.array([
         m['knee_flexion_max'] for m in metrics_list 
         if 'knee_flexion_max' in m
@@ -150,15 +158,17 @@ def _calculate_kinematic_aggregation(metrics_list: List[Dict]) -> Dict[str, Opti
     
     all_knee_angles = np.array(all_knee_angles) if all_knee_angles else np.array([])
     
-    stats = {
+    stats: Dict[str, Optional[float]] = {
         'knee_angle_mean': float(np.mean(all_knee_angles)) if len(all_knee_angles) > 0 else 0.0,
         'knee_angle_std': float(np.std(all_knee_angles)) if len(all_knee_angles) > 0 else 0.0,
         'knee_angle_max': float(np.max(knee_flexion_max_values)) if len(knee_flexion_max_values) > 0 else 0.0,
         'knee_angle_min': float(np.min(knee_extension_min_values)) if len(knee_extension_min_values) > 0 else 0.0,
     }
     
-    if stats['knee_angle_max'] > 0 or stats['knee_angle_min'] != 0:
-        stats['knee_amplitude'] = stats['knee_angle_max'] - stats['knee_angle_min']
+    knee_max = stats.get('knee_angle_max')
+    knee_min = stats.get('knee_angle_min')
+    if isinstance(knee_max, (int, float)) and isinstance(knee_min, (int, float)) and (knee_max > 0 or knee_min != 0):
+        stats['knee_amplitude'] = float(knee_max) - float(knee_min)
     else:
         stats['knee_amplitude'] = 0.0
     
@@ -184,9 +194,9 @@ def _calculate_kinematic_aggregation(metrics_list: List[Dict]) -> Dict[str, Opti
         stats['hip_angle_min'] = None
         stats['hip_amplitude'] = None
     
-    for key in stats:
-        if stats[key] is not None:
-            stats[key] = round(stats[key], 2)
+    for key, value in stats.items():
+        if isinstance(value, (int, float)):
+            stats[key] = round(float(value), 2)
     
     return stats
 
@@ -237,7 +247,7 @@ def _calculate_global_orientation(orientation: np.ndarray) -> Dict[str, float]:
                 values = orientation[field_name]
                 return float(np.mean(values)) if len(values) > 0 else 0.0
         else:
-            if field_name in orientation.dtype.names:
+            if orientation.dtype.names is not None and field_name in orientation.dtype.names:
                 values = orientation[field_name]
                 return float(np.mean(values)) if len(values) > 0 else 0.0
         return 0.0
@@ -291,7 +301,7 @@ def _calculate_clinical_metrics(metrics_list: List[Dict]) -> Dict[str, Optional[
     
     return clinical
 
-def _calculate_speed(metrics_list: List[Dict], metadata: Metadata = None):
+def _calculate_speed(metrics_list: List[Dict], metadata: Optional[Metadata] = None) -> Dict[str, float]:
     step_count = len(metrics_list)
     step_times = np.array([m['step_time'] for m in metrics_list if 'step_time' in m])
     duration = float(np.sum(step_times)) if step_count > 0 else 0.0

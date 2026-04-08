@@ -1,0 +1,437 @@
+{
+  "info": {
+    "_postman_id": "nmove-auth-api-v1",
+    "name": "NMove Auth API",
+    "description": "Complete authentication flow for the NMove gait analysis wearable app. Covers registration, login, token refresh, logout, and role-guard verification.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "patient_access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "doctor_access_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "1. Register Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"patient@nmove.com\",\n  \"password\": \"Test1234\",\n  \"role\": \"patient\",\n  \"full_name\": \"Test Patient\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new patient account. Returns 201 with user info on success, 409 if email already exists."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Has user id\", () => pm.expect(pm.response.json().user.id).to.be.a('string'));",
+                  "pm.test(\"Role is patient\", () => pm.expect(pm.response.json().user.role).to.eql('patient'));",
+                  "pm.test(\"Has success message\", () => pm.expect(pm.response.json().message).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. Register Doctor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"doctor@nmove.com\",\n  \"password\": \"Test1234\",\n  \"role\": \"doctor\",\n  \"full_name\": \"Dr. Test\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register a new doctor account. Returns 201 with user info on success."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"Role is doctor\", () => pm.expect(pm.response.json().user.role).to.eql('doctor'));",
+                  "pm.test(\"Has user id\", () => pm.expect(pm.response.json().user.id).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Login Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"patient@nmove.com\",\n  \"password\": \"Test1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login as patient. Saves access_token, refresh_token, and patient_access_token to collection variables."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Has access_token\", () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.access_token).to.be.a('string');",
+                  "    pm.expect(json.refresh_token).to.be.a('string');",
+                  "    pm.collectionVariables.set(\"access_token\", json.access_token);",
+                  "    pm.collectionVariables.set(\"refresh_token\", json.refresh_token);",
+                  "    pm.collectionVariables.set(\"patient_access_token\", json.access_token);",
+                  "});",
+                  "pm.test(\"Token type is bearer\", () => pm.expect(pm.response.json().token_type).to.eql('bearer'));",
+                  "pm.test(\"Has expires_in\", () => pm.expect(pm.response.json().expires_in).to.be.a('number'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Login Doctor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"doctor@nmove.com\",\n  \"password\": \"Test1234\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login as doctor. Saves doctor_access_token to collection variables."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Saves doctor token\", () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.access_token).to.be.a('string');",
+                  "    pm.collectionVariables.set(\"doctor_access_token\", json.access_token);",
+                  "});",
+                  "pm.test(\"Has refresh token\", () => pm.expect(pm.response.json().refresh_token).to.be.a('string'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "5. Get Me (patient)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Fetch the currently authenticated user's profile. Uses access_token (patient) from collection variables."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Returns correct email\", () =>",
+                  "    pm.expect(pm.response.json().email).to.eql(\"patient@nmove.com\"));",
+                  "pm.test(\"Role is patient\", () =>",
+                  "    pm.expect(pm.response.json().role).to.eql(\"patient\"));",
+                  "pm.test(\"Has user id\", () =>",
+                  "    pm.expect(pm.response.json().id).to.be.a('string'));",
+                  "pm.test(\"is_active is true\", () =>",
+                  "    pm.expect(pm.response.json().is_active).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "refresh"]
+            },
+            "description": "Exchange the refresh token for a new rotated access + refresh token pair. Updates collection variables with new tokens."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Returns new tokens\", () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.access_token).to.be.a('string');",
+                  "    pm.expect(json.refresh_token).to.be.a('string');",
+                  "    pm.expect(json.refresh_token).to.not.eql(pm.collectionVariables.get(\"refresh_token\"));",
+                  "    pm.collectionVariables.set(\"access_token\", json.access_token);",
+                  "    pm.collectionVariables.set(\"refresh_token\", json.refresh_token);",
+                  "});",
+                  "pm.test(\"Has expires_in\", () =>",
+                  "    pm.expect(pm.response.json().expires_in).to.be.a('number'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "7. Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            },
+            "description": "Revoke the refresh token. Clears access_token and refresh_token collection variables. Idempotent — calling twice both return 200."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Logout message\", () =>",
+                  "    pm.expect(pm.response.json().message).to.include(\"Logged out\"));",
+                  "pm.test(\"Clear tokens\", () => {",
+                  "    pm.collectionVariables.set(\"access_token\", \"\");",
+                  "    pm.collectionVariables.set(\"refresh_token\", \"\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Role Guard Tests",
+      "item": [
+        {
+          "name": "8. Doctor token on patient-only route (expect 403)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/patient-only-test",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "patient-only-test"]
+            },
+            "description": "A doctor's access token should be rejected by a patient-only route with HTTP 403. The /auth/patient-only-test route is a Day 1 test stub that uses require_patient. Demonstrates role guard enforcement."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"403 for wrong role\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "9. No token hits protected route (expect 401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Request without an Authorization header should be rejected with HTTP 401 and WWW-Authenticate header."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"401 without token\", () => pm.response.to.have.status(401));",
+                  "pm.test(\"Has WWW-Authenticate header\", () =>",
+                  "    pm.expect(pm.response.headers.get('WWW-Authenticate')).to.include('Bearer'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10. Expired/invalid token (expect 401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer invalid.token.value"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "A tampered or expired JWT should be rejected with HTTP 401. Tests that decode_access_token correctly rejects invalid tokens."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"401 invalid token\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

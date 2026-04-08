@@ -1,0 +1,28 @@
+{
+  "metrics": {
+    "cadence": {
+      "lower_is_better": false,
+      "deviation_metric": false,
+      "groups": {
+        "20": {"mean": 117.0, "sd": 8.0},
+        "30": {"mean": 115.0, "sd": 9.0},
+        "40": {"mean": 113.0, "sd": 10.0},
+        "50": {"mean": 110.0, "sd": 11.0},
+        "60": {"mean": 105.0, "sd": 12.0},
+        "70": {"mean": 97.0, "sd": 14.0}
+      }
+    },
+    "stride_length": {
+      "lower_is_better": false,
+      "deviation_metric": false,
+      "groups": {
+        "20": {"mean": 1.46, "sd": 0.12},
+        "30": {"mean": 1.43, "sd": 0.13},
+        "40": {"mean": 1.40, "sd": 0.14},
+        "50": {"mean": 1.35, "sd": 0.15},
+        "60": {"mean": 1.28, "sd": 0.16},
+        "70": {"mean": 1.18, "sd": 0.18}
+      }
+    }
+  }
+}
