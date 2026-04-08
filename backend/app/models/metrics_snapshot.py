@@ -9,9 +9,15 @@ Columns are grouped by biomechanical domain to mirror the ML feature vector:
 import enum
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, Enum as SAEnum, Float, ForeignKey, Integer
 from sqlalchemy.dialects.postgresql import UUID
+
+if TYPE_CHECKING:
+    from app.models.gait_session import GaitSession  # noqa: F401
+    from app.models.exercise import Exercise         # noqa: F401
+
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
@@ -19,9 +25,9 @@ from app.db.base import Base
 
 
 class InterpretationStatus(str, enum.Enum):
-    normal = "normal"
-    needs_attention = "needs_attention"
-    improving = "improving"
+    normal    = "normal"
+    attention = "attention"
+    concern   = "concern"
 
 
 class MetricsSnapshot(Base):

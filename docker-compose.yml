@@ -58,34 +58,6 @@ services:
       timeout: 20s
       retries: 3
 
-  n8n:
-    image: n8nio/n8n:latest
-    container_name: nmove_n8n
-    restart: unless-stopped
-    ports:
-      - "5678:5678"
-    environment:
-      N8N_BASIC_AUTH_ACTIVE: "true"
-      N8N_BASIC_AUTH_USER: ${N8N_BASIC_AUTH_USER:-admin}
-      N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD:-changeme}
-      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:-changeme_enc_key}
-      DB_TYPE: postgresdb
-      DB_POSTGRESDB_HOST: db
-      DB_POSTGRESDB_PORT: 5432
-      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB:-nmove}
-      DB_POSTGRESDB_USER: ${POSTGRES_USER:-postgres}
-      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      QUEUE_BULL_REDIS_HOST: redis
-      QUEUE_BULL_REDIS_PORT: 6379
-    volumes:
-      - nmove_n8n:/home/node/.n8n
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - nmove_net
 
   api:
     build:
@@ -107,8 +79,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      minio:
+        condition: service_healthy
     networks:
       - nmove_net
+
 
   celery_worker:
     build:
@@ -120,21 +95,18 @@ services:
       db:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    env_file:
+      - .env
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
-    volumes:
-      - ./backend:/app
+      # Override to ensure Docker service names are used (not localhost)
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-nmove}
+      REDIS_URL: redis://redis:6379/0
+      MINIO_ENDPOINT: minio:9000
     networks:
       - nmove_net
-    command: >
-      celery -A celery_app worker
-      --loglevel=info
-      --queues=gait_processing
-      --concurrency=2
-      --hostname=nmove-worker@%h
 
   flower:
     image: mher/flower:2.0
@@ -146,15 +118,11 @@ services:
     ports:
       - "5555:5555"
     environment:
-      - CELERY_BROKER_URL=${REDIS_URL}
+      - CELERY_BROKER_URL=redis://redis:6379/0
       - FLOWER_BASIC_AUTH=admin:nmoveflower
     networks:
       - nmove_net
-    command: >
-      celery
-      --broker=${REDIS_URL}
-      flower
-      --port=5555
+    command: celery --broker=redis://redis:6379/0 flower --port=5555
 
 networks:
   nmove_net:
@@ -164,4 +132,3 @@ volumes:
   nmove_db:
   nmove_redis:
   nmove_minio:
-  nmove_n8n:

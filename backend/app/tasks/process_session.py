@@ -198,8 +198,13 @@ def close_and_process(self, session_id: str) -> dict:
             if session.ended_at is not None:
                 return {"status": "skipped", "reason": "already_closed"}
 
-            session.ended_at = datetime.utcnow()
-            duration = (session.ended_at - session.started_at.replace(tzinfo=None)).total_seconds()
+            from datetime import timezone
+            now_utc = datetime.now(timezone.utc)
+            session.ended_at = now_utc
+            started = session.started_at
+            if started.tzinfo is None:
+                started = started.replace(tzinfo=timezone.utc)
+            duration = (now_utc - started).total_seconds()
             session.duration_seconds = duration
             db.commit()
 

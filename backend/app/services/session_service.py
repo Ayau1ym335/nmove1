@@ -153,12 +153,13 @@ def sync_update_session_status(
     error_message: str | None = None,
     reading_count: int | None = None,
 ) -> None:
+    from datetime import timezone
     from app.db.sync_session import get_sync_db
     try:
         with get_sync_db() as db:
-            update_data = {
+            update_data: dict = {
                 "status": new_status,
-                "status_updated_at": datetime.utcnow()
+                "status_updated_at": datetime.now(timezone.utc),
             }
             if error_message is not None:
                 update_data["error_message"] = error_message
@@ -166,6 +167,8 @@ def sync_update_session_status(
                 update_data["reading_count"] = reading_count
 
             db.query(GaitSession).filter(GaitSession.id == UUID(session_id)).update(update_data)
+            db.commit()
             logger.info(f"Sync update session {session_id} to {new_status}")
     except Exception as e:
         logger.error(f"Failed to sync_update_session_status for {session_id}: {e}")
+

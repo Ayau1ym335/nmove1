@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas.trends import TrendsResponse, MetricTrendSeries, TrendDataPoint
 
 # Map allowed metric keys to their SQL column in metrics_snapshots (aliased as ms)
+# NOTE: This is a server-side allowlist. metric_column values are NEVER derived
+# from user input, so formatting them into SQL is safe.
 METRIC_COLUMN_MAP = {
     "movement_age":        "ms.movement_age",
     "symmetry_score":      "ms.symmetry_score",
@@ -37,7 +39,6 @@ METRIC_LABELS = {
 }
 
 
-
 async def fetch_metric_series(
     db: AsyncSession,
     user_id: UUID,
@@ -46,7 +47,9 @@ async def fetch_metric_series(
     from_date: date,
     to_date: date,
 ) -> list[TrendDataPoint]:
-    sql = text("""
+    # metric_column is ALWAYS sourced from METRIC_COLUMN_MAP (server-side
+    # allowlist), never from user input — safe to format into the SQL string.
+    sql = text(f"""
         SELECT
             time_bucket('1 day', gs.started_at) AS bucket,
             AVG({metric_column})               AS value,
@@ -61,7 +64,7 @@ async def fetch_metric_series(
     """)
 
     result = await db.execute(sql, {
-        "user_id": str(user_id), 
+        "user_id": str(user_id),
         "days_str": f"{days} days"
     })
     rows = result.fetchall()
@@ -77,10 +80,10 @@ async def build_series_stats(
     label, unit, lower_is_better = METRIC_LABELS[metric]
 
     values = [d.value for d in data if d.value is not None]
-    
+
     first_val = values[0] if values else None
     last_val = values[-1] if values else None
-    
+
     change = None
     change_pct = None
     peak = None
@@ -98,7 +101,7 @@ async def build_series_stats(
         x = np.arange(len(values))
         y = np.array(values)
         slope = np.polyfit(x, y, 1)[0]
-        
+
         # Determine trend direction using basic slope tolerance
         if abs(slope) < 0.05:
             trend_direction = "stable"
@@ -131,21 +134,20 @@ async def get_user_trends(
 ) -> TrendsResponse:
     from_date = date.today() - timedelta(days=days - 1)
     to_date = date.today()
-    
+
     # Fire all SQL trend queries in parallel
     tasks = []
     for m in metrics:
         metric_column = METRIC_COLUMN_MAP[m]
         tasks.append(fetch_metric_series(db, user_id, metric_column, days, from_date, to_date))
-    
+
     results = await asyncio.gather(*tasks)
-    
+
     # Process sequential Python gap/stats builders
     series_tasks = [build_series_stats(res, m) for res, m in zip(results, metrics)]
     series_list = await asyncio.gather(*series_tasks)
 
-    # Compute sum of unique session hits across entire requested period. 
-    # Use any metric dimension since gait_session count relies on the primary timestamp axis grouping.
+    # Compute sum of unique session hits across entire requested period.
     total_sessions_in_window = sum(d.session_count for d in results[0]) if results else 0
 
     return TrendsResponse(

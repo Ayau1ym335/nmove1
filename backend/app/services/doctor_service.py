@@ -252,33 +252,17 @@ async def _query_chart_data(db: AsyncSession, patient_id: UUID, doctor_id: UUID,
         WHERE gs.user_id = :patient_id
           AND gs.doctor_id = :doctor_id
           AND gs.status = 'done'
-          AND gs.started_at >= NOW() - INTERVAL ':days days'
-        GROUP BY bucket
-        ORDER BY bucket ASC
-    """)
-    q_safe = text("""
-        SELECT
-            time_bucket('1 day', gs.started_at) AS bucket,
-            AVG(ms.movement_age)                AS movement_age,
-            AVG(ms.symmetry_score)              AS symmetry_score,
-            AVG(ms.stability_score)             AS stability_score,
-            AVG(ms.cadence)                     AS cadence,
-            COUNT(*)                            AS session_count
-        FROM gait_sessions gs
-        JOIN metrics_snapshots ms ON ms.gait_session_id = gs.id
-        WHERE gs.user_id = :patient_id
-          AND gs.doctor_id = :doctor_id
-          AND gs.status = 'done'
           AND gs.started_at >= NOW() - CAST(:days_str AS INTERVAL)
         GROUP BY bucket
         ORDER BY bucket ASC
     """)
-    res = await db.execute(q_safe, {
-        "patient_id": str(patient_id), 
-        "doctor_id": str(doctor_id), 
+    res = await db.execute(q, {
+        "patient_id": str(patient_id),
+        "doctor_id": str(doctor_id),
         "days_str": f"{trend_days} days"
     })
     return [dict(r) for r in res.mappings().all()]
+
 
 async def _query_exercise_adherence(db: AsyncSession, patient_id: UUID, doctor_id: UUID) -> list[dict]:
     q = text("""

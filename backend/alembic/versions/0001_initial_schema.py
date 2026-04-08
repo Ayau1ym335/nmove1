@@ -38,8 +38,30 @@ def _drop_enum(name: str) -> None:
 def upgrade() -> None:
 
     # ------------------------------------------------------------------
+    # 1. PostgreSQL ENUM types — must exist before any table references them.
+    #    Migrations use create_type=False so SQLAlchemy won't re-create them;
+    #    we own the DDL here.
+    # ------------------------------------------------------------------
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE user_role AS ENUM ('patient', 'doctor');
+        EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE interpretation_status AS ENUM ('normal', 'attention', 'concern');
+        EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            CREATE TYPE exercise_difficulty AS ENUM ('easy', 'medium', 'hard');
+        EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+    """)
+
+    # ------------------------------------------------------------------
     # 2. users
     # ------------------------------------------------------------------
+
     op.create_table(
         "users",
         sa.Column(
@@ -189,8 +211,8 @@ def upgrade() -> None:
             "interpretation_status",
             sa.Enum(
                 "normal",
-                "needs_attention",
-                "improving",
+                "attention",
+                "concern",
                 name="interpretation_status",
                 create_type=False,
             ),

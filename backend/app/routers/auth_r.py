@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from data.tables import get_db, Users, Doctors, Profiles
-from schemas import UserLogin, UserBase,DoctorRegister, UserRegister, Token, UserResponse, DoctorResponse
-from auth import (
+from ..data.tables import get_db, Users, Doctors, Profiles
+from ..schemas import UserLogin, UserBase, DoctorRegister, UserRegister, Token, UserResponse, DoctorResponse
+from ..auth import (
     get_password_hash, 
     verify_password, 
     create_access_token, 

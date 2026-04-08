@@ -38,6 +38,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception as exc:  # pragma: no cover
         logger.error("Redis connection failed: %s", exc)
 
+    # Ensure MinIO buckets exist (idempotent — safe to call on every restart)
+    try:
+        import asyncio as _asyncio
+        from app.services.minio_service import ensure_bucket_exists
+        from app.ml.minio_model_store import _ensure_bucket as ensure_models_bucket
+        await _asyncio.to_thread(ensure_bucket_exists)
+        await _asyncio.to_thread(ensure_models_bucket)
+        logger.info("MinIO buckets verified.")
+    except Exception as exc:  # pragma: no cover
+        logger.warning("MinIO bucket init failed (non-fatal at startup): %s", exc)
+
+
     yield  # Application is live and serving requests
 
     # Shutdown (graceful)
@@ -82,11 +94,59 @@ app.include_router(trends_router)               # prefix="/trends" set inside ro
 app.include_router(doctor_router)               # prefix="/doctor" set inside router
 
 # ---------------------------------------------------------------------------
-# Health check
+# Health check — full readiness probe: DB + Redis + MinIO
 # ---------------------------------------------------------------------------
 
 
-@app.get("/health", tags=["Health"], summary="Service liveness probe")
+@app.get("/health", tags=["Health"], summary="Full readiness probe — DB, Redis, MinIO")
 async def health() -> dict:
-    """Return a simple liveness response including the current environment."""
-    return {"status": "ok", "app": "NMove", "env": settings.APP_ENV}
+    """Return 200 if all backing services are healthy; 503 otherwise.
+    Never exposes raw exception messages in the response body.
+    """
+    from fastapi import HTTPException
+    from sqlalchemy import text as sa_text
+    from app.db.session import AsyncSessionLocal
+
+    checks: dict[str, str] = {}
+    all_ok = True
+
+    # ── DB ────────────────────────────────────────────────────────────────────
+    try:
+        async with AsyncSessionLocal() as _db:
+            await _db.execute(sa_text("SELECT 1"))
+        checks["db"] = "ok"
+    except Exception:
+        logger.exception("Health: DB check failed")
+        checks["db"] = "error"
+        all_ok = False
+
+    # ── Redis ─────────────────────────────────────────────────────────────────
+    try:
+        await redis_client.ping()
+        checks["redis"] = "ok"
+    except Exception:
+        logger.exception("Health: Redis check failed")
+        checks["redis"] = "error"
+        all_ok = False
+
+    # ── MinIO ─────────────────────────────────────────────────────────────────
+    try:
+        import asyncio as _asyncio
+        from app.services.minio_service import _get_client, BUCKET_NAME
+        _mc = _get_client()
+        await _asyncio.to_thread(_mc.bucket_exists, BUCKET_NAME)
+        checks["minio"] = "ok"
+    except Exception:
+        logger.exception("Health: MinIO check failed")
+        checks["minio"] = "error"
+        all_ok = False
+
+    payload = {
+        "status": "ok" if all_ok else "degraded",
+        "app": "NMove",
+        "env": settings.APP_ENV,
+        "checks": checks,
+    }
+    if not all_ok:
+        raise HTTPException(status_code=503, detail=payload)
+    return payload
