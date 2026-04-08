@@ -1,7 +1,8 @@
 import os
 from datetime import datetime, date, timedelta
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from uuid import UUID
+from typing import Optional, Literal, cast
 from sqlalchemy import text
 from app.schemas.doctor import SessionRow, ExerciseAdherenceRow, MovementAgeSummaryDetail
 from app.reports.medical_text import ClinicalText, generate_clinical_text
@@ -19,8 +20,8 @@ class ReportData:
     movement_age:    MovementAgeSummaryDetail
     domain_scores:   dict[str, float]
     norms:           dict[str, dict]
-    clinical_text:   ClinicalText = None
-    charts_svg:      dict[str, str] = None
+    clinical_text:   Optional[ClinicalText] = None
+    charts_svg:      dict[str, str] = field(default_factory=dict)
 
 def sync_query_user(db, user_id: UUID) -> dict | None:
     res = db.execute(text("SELECT * FROM users WHERE id = :idx"), {"idx": str(user_id)})
@@ -110,7 +111,10 @@ def assemble_report_data(db, patient_id: str, doctor_id: str, days: int) -> Repo
             symmetry_score=r["symmetry_score"],
             stability_score=r["stability_score"],
             cadence=r["cadence"],
-            status_badge=resolve_status_badge(r["interpretation_status"])
+            status_badge=cast(
+                Literal["normal", "attention", "concern", "no_data"],
+                resolve_status_badge(r["interpretation_status"])
+            )
         ))
         
     mapped_exercises = []

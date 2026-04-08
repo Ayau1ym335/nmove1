@@ -28,12 +28,16 @@ def gap_fill_chart(
                 bucket_date = bucket_val.date() if hasattr(bucket_val, "date") else bucket_val
 
         value = None
-        if hasattr(row, "value"): value = row.value
-        elif isinstance(row, dict) and "value" in row: value = row["value"]
+        if isinstance(row, dict):
+            value = row.get("value")
+        else:
+            value = getattr(row, "value", None)
 
         session_count = 0
-        if hasattr(row, "session_count"): session_count = row.session_count
-        elif isinstance(row, dict) and "session_count" in row: session_count = row["session_count"]
+        if isinstance(row, dict):
+            session_count = row.get("session_count", 0)
+        else:
+            session_count = getattr(row, "session_count", 0)
 
         if bucket_date:
             db_dict[bucket_date] = {

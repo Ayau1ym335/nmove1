@@ -27,12 +27,11 @@ from __future__ import annotations
 import io
 import logging
 import pickle
-from typing import Any
 
 import numpy as np
 import torch
 import torch.nn as nn
-from torch.optim import Adam
+from torch.optim.adam import Adam
 
 logger = logging.getLogger("nmove.ml.autoencoder")
 

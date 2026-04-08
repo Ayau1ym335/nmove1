@@ -1,6 +1,7 @@
 from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Any, cast, Literal
 
 from app.core.dependencies import require_doctor
 from app.db.session import get_db
@@ -12,7 +13,6 @@ from app.services.session_service import get_session_or_404
 from app.services.trend_service import get_user_trends
 from app.schemas.trends import TrendsResponse
 from fastapi import Query
-from typing import Literal
 from app.routers.dashboard import get_dashboard_summary
 
 router = APIRouter(prefix="/doctor", tags=["doctor"])
@@ -103,7 +103,7 @@ async def create_patient_report(
         from fastapi import HTTPException
         raise HTTPException(status_code=403, detail="Not assigned to this patient")
 
-    task = generate_report_task.delay(str(patient_id), str(current_user.id), request.days)
+    task = cast(Any, generate_report_task).delay(str(patient_id), str(current_user.id), request.days)
     
     return ReportTaskResponse(
         task_id=task.id,
@@ -141,7 +141,7 @@ async def get_report_status(
         "SUCCESS": "done",
         "FAILURE": "failed"
     }
-    status = status_map.get(state, "queued")
+    status = cast(Literal["queued", "processing", "done", "failed"], status_map.get(state, "queued"))
     
     url = None
     expires_at = None

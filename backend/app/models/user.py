@@ -2,6 +2,7 @@
 import enum
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, Enum as SAEnum, String, Integer
 from sqlalchemy.dialects.postgresql import UUID
@@ -9,6 +10,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.models.session import AuthSession
+    from app.models.gait_session import GaitSession
 
 
 class UserRole(str, enum.Enum):

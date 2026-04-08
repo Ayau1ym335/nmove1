@@ -1,6 +1,8 @@
 import logging
 from datetime import datetime, timezone
 from uuid import UUID
+from typing import Any, Literal, cast
+import numpy as np
 
 from fastapi import HTTPException, status
 from sqlalchemy import insert, select, update
@@ -11,6 +13,15 @@ from app.models.gait_session import GaitSession
 from app.schemas.ingest import IMUReading, IngestRequest, IngestResponse
 
 logger = logging.getLogger(__name__)
+
+_BIN_DTYPE = np.dtype([
+    ("header", "u1"),
+    ("timestamp", "f8"),
+    ("acc1", "f4", (3,)),
+    ("gyro1", "f4", (3,)),
+    ("acc2", "f4", (3,)),
+    ("gyro2", "f4", (3,)),
+])
 
 
 async def validate_session_ownership(
@@ -115,7 +126,7 @@ async def write_readings(
     from app.tasks.process_session import process_session
     from app.core.cache import invalidate_user_dashboard, cache_delete_pattern, cache_delete
 
-    task_result = process_session.delay(str(gait_session.id))
+    task_result = cast(Any, process_session).delay(str(gait_session.id))
     logger.info(f"Enqueued process_session task: task_id={task_result.id} session={gait_session.id}")
     
     await invalidate_user_dashboard(str(gait_session.user_id))
@@ -141,4 +152,74 @@ async def write_readings(
         warnings=warnings,
         ingested_at=datetime.now(timezone.utc),
         task_id=task_result.id,
+    )
+
+
+def build_ingest_request_from_bin(
+    *,
+    raw_bytes: bytes,
+    session_id: UUID,
+    leg_side: Literal["left", "right"],
+    device_id: str | None,
+    sensor_slot: int = 1,
+) -> IngestRequest:
+    if not raw_bytes:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty .bin file")
+
+    if sensor_slot not in (1, 2):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="sensor_slot must be 1 or 2",
+        )
+
+    record_size = _BIN_DTYPE.itemsize
+    if len(raw_bytes) % record_size != 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid .bin size: not aligned to record size ({record_size} bytes)",
+        )
+
+    try:
+        arr = np.frombuffer(raw_bytes, dtype=_BIN_DTYPE)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to decode .bin payload: {exc}",
+        ) from exc
+
+    if arr.size == 0:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No IMU frames found in .bin file")
+
+    acc_key = "acc1" if sensor_slot == 1 else "acc2"
+    gyro_key = "gyro1" if sensor_slot == 1 else "gyro2"
+
+    readings: list[IMUReading] = []
+    for i, row in enumerate(arr):
+        try:
+            ts = datetime.fromtimestamp(float(row["timestamp"]), tz=timezone.utc)
+            acc = row[acc_key]
+            gyro = row[gyro_key]
+            readings.append(
+                IMUReading(
+                    timestamp=ts,
+                    ax=float(acc[0]),
+                    ay=float(acc[1]),
+                    az=float(acc[2]),
+                    gx=float(gyro[0]),
+                    gy=float(gyro[1]),
+                    gz=float(gyro[2]),
+                    leg_side=leg_side,
+                    sequence_number=i,
+                )
+            )
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Invalid frame at index {i}: {exc}",
+            ) from exc
+
+    return IngestRequest(
+        session_id=session_id,
+        device_id=device_id,
+        readings=readings,
     )

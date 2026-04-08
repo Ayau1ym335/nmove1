@@ -1,10 +1,9 @@
 import numpy as np
 from scipy.signal import butter, filtfilt
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple, cast, Set
 from dataclasses import dataclass
 from scipy import signal
-from enum import Enum
-from .detect_act import ActivityType
+from app.legacy.data_tables import ActivityType
 from .dclass import ActivitySegment, FilterConfig
 
 def prefiltration(data: np.ndarray, cutoff: float = 20.0, fs: float = 125.0): 
@@ -13,7 +12,7 @@ def prefiltration(data: np.ndarray, cutoff: float = 20.0, fs: float = 125.0):
     normal_cutoff = cutoff / nyq
     if normal_cutoff >= 1.0:
             normal_cutoff = 0.99
-    b, a = butter(order, normal_cutoff, btype='lowpass')
+    b, a = cast(Tuple[np.ndarray, np.ndarray], butter(order, normal_cutoff, btype='lowpass', output='ba'))
     return filtfilt(b, a, data, axis=0)
 
 class Filter:
@@ -31,11 +30,12 @@ class Filter:
         
         filtered_data = np.copy(data)
         timestamps = data['timestamp']
-        unique_activities = set(seg.activity_type for seg in segments)
+        unique_activities: Set[ActivityType] = set(seg.activity_type for seg in segments)
         filtered_versions = {}
+        cutoff_frequencies = self.config.cutoff_frequencies or {}
         
         for activity_type in unique_activities:
-            cutoff_freq = self.config.cutoff_frequencies[activity_type]
+            cutoff_freq = cutoff_frequencies.get(activity_type, cutoff_frequencies.get(ActivityType.UNKNOWN, 8.0))
             filtered_versions[activity_type] = self._apply_butterworth_filter(
                 data, cutoff_freq
             )
@@ -121,7 +121,9 @@ class Filter:
                 alpha[fade_out_start:end_idx] *= fade_out
             
             alpha_masks[segment.activity_type] += alpha
-        total_alpha = sum(alpha_masks.values())
+        total_alpha = np.zeros(n_samples)
+        for values in alpha_masks.values():
+            total_alpha += values
         zero_mask = total_alpha < 1e-6
         if np.any(zero_mask):
             if ActivityType.UNKNOWN in alpha_masks:

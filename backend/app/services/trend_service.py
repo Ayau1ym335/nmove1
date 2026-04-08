@@ -1,6 +1,6 @@
 import asyncio
 from datetime import date, timedelta
-from typing import Any
+from typing import Any, cast
 import numpy as np
 from uuid import UUID
 from sqlalchemy import text
@@ -70,7 +70,7 @@ async def fetch_metric_series(
     rows = result.fetchall()
 
     from app.utils.timeseries import gap_fill_chart
-    return gap_fill_chart(rows, from_date, to_date)
+    return gap_fill_chart(list[Any](rows), from_date, to_date)
 
 
 async def build_series_stats(
@@ -90,9 +90,11 @@ async def build_series_stats(
     trough = None
 
     if values:
-        change = last_val - first_val
-        if first_val and first_val != 0:
-            change_pct = (change / first_val) * 100
+        first_num = cast(float, first_val)
+        last_num = cast(float, last_val)
+        change = last_num - first_num
+        if first_num != 0:
+            change_pct = (change / first_num) * 100
         peak = max(values)
         trough = min(values)
 

@@ -1,8 +1,8 @@
-from typing import Dict, Any, Union, Optional
+from typing import Dict, Any, Optional
 
-def calculate_diff(current: float, target: Optional[float]) -> Union[float, str]:
+def calculate_diff(current: float, target: Optional[float]) -> Optional[float]:
     if target is None:
-        return "N/A"
+        return None
     
     if abs(target) < 0.001:
         return round(current - target, 2)
@@ -31,15 +31,21 @@ def matrix_calc(
         
         c_status = "Unknown"
         if clinical_diff is not None:
-            if abs(clinical_diff) <= 10: c_status = "Normal"
-            elif abs(clinical_diff) <= 20: c_status = "Warning"
-            else: c_status = "Critical"
+            if abs(clinical_diff) <= 10:
+                c_status = "Normal"
+            elif abs(clinical_diff) <= 20:
+                c_status = "Warning"
+            else:
+                c_status = "Critical"
 
         b_status = "No Baseline"
         if baseline_diff is not None:
-            if abs(baseline_diff) < 3: b_status = "Stable"
-            elif baseline_diff > 0: b_status = "Changed (+)" 
-            else: b_status = "Changed (-)"
+            if abs(baseline_diff) < 3:
+                b_status = "Stable"
+            elif baseline_diff > 0:
+                b_status = "Changed (+)"
+            else:
+                b_status = "Changed (-)"
         
         matrix[metric] = {
             "current_value": value,
@@ -57,7 +63,7 @@ def matrix_calc(
         
     return matrix
 
-def start_doctor_chat(clinical_report_text):
+def start_doctor_chat(clinical_report_text: str, model: Any) -> None:
     chat_system_instruction = f"""
 SYSTEM ROLE
 You are Nmove AI Assistant, a helpful and empathetic medical consultant.

@@ -123,7 +123,7 @@ class Users(Base):
     walking_sessions = relationship("WalkingSessions", back_populates="user", cascade="all, delete-orphan")
     progress_records = relationship("UserProgress", back_populates="user", cascade="all, delete-orphan")
     medical_reports = relationship("MedicalReport", back_populates="user", cascade="all, delete-orphan")
-    injuries = relationship("Injury",back_populates="user",cascade="all, delete-orphan",uselist=False)
+    Injury = relationship("Injury",back_populates="user",cascade="all, delete-orphan",uselist=False)
 
     __table_args__ = (
         CheckConstraint("email LIKE '%@%'", name="check_email_format"),
@@ -164,7 +164,7 @@ class Profiles(Base):
     )
 
 class Injury(Base):
-    __tablename__ = 'injuries'
+    __tablename__ = 'Injury'
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("user.id"), unique=True, nullable=False)
     body_part = Column(ARRAY(SQLEnum(BodyPart)), nullable=False)

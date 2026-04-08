@@ -181,10 +181,10 @@ def generate_clinical_text(data) -> ClinicalText:
     # Generic low risk checks for any pending "attention" states
     if s_latest and s_latest.status_badge == "attention" and not risk_flags:
         risk_flags.append(RiskFlag("low", "Sub-optimal composite score", "Multiple metrics trending downward.", "composite"))
-        recommendations.append(ClinicalRecommendation("monitoring", "monitoring", "Re-assess in 4 weeks. Track trend direction.", "Early intervention monitoring.", "general"))
+        recommendations.append(ClinicalRecommendation("routine", "monitoring", "Re-assess in 4 weeks. Track trend direction.", "Early intervention monitoring.", "general"))
 
     if trend == "declining" and n_sessions >= 3:
-        recommendations.append(ClinicalRecommendation("monitoring", "referral", f"Schedule clinical review — sustained decline over {n_sessions} sessions.", "Continuous negative trajectory isolated.", "general"))
+        recommendations.append(ClinicalRecommendation("routine", "referral", f"Schedule clinical review — sustained decline over {n_sessions} sessions.", "Continuous negative trajectory isolated.", "general"))
 
     icd_hints.append("ICD-10 codes are provided as clinical reference only. Formal diagnosis requires clinical examination.")
     

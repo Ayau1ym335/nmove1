@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from uuid import UUID
+from typing import Any, cast
 
 from celery_app import celery
 from app.tasks.base_task import NMoveBaseTask
@@ -117,7 +118,6 @@ def process_session(self, session_id: str) -> dict:
         # Updates anomaly_score + is_anomaly on the snapshot row.
         try:
             from app.ml.scorer import score_snapshot
-            from app.db.sync_session import get_sync_db
             from app.models.metrics_snapshot import MetricsSnapshot as MS
             with get_sync_db() as score_db:
                 fresh_snap = score_db.query(MS).filter(MS.id == snapshot.id).first()
@@ -141,7 +141,6 @@ def process_session(self, session_id: str) -> dict:
         # that ML failure never rolls back the main processing transaction.
         try:
             from app.ml.trainer import maybe_train_model
-            from app.db.sync_session import get_sync_db
             with get_sync_db() as ml_db:
                 maybe_train_model(str(session.user_id), ml_db)
         except Exception:
@@ -208,7 +207,7 @@ def close_and_process(self, session_id: str) -> dict:
             session.duration_seconds = duration
             db.commit()
 
-            process_session.delay(session_id)
+            cast(Any, process_session).delay(session_id)
             return {
                 "status": "closed_and_queued",
                 "session_id": session_id,

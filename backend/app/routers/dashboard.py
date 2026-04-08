@@ -1,9 +1,9 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Literal
+from typing import Literal, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -213,7 +213,7 @@ async def get_dashboard_summary(
         movement_age_summary = MovementAgeSummary(
             movement_age=int(snapshot.movement_age),
             bio_age=snapshot.bio_age,
-            delta=snapshot.movement_age_delta,
+            delta=int(snapshot.movement_age_delta) if snapshot.movement_age_delta is not None else None,
             delta_vs_last_session=delta_vs_last,
             composite_score=snapshot.stability_score, # Because we map composite_score to stability_score previously in DB
             trend=trend,
@@ -268,8 +268,9 @@ async def get_dashboard_summary(
     overall_status = snapshot.interpretation_status if snapshot else "no_data"
     
     # In case overall_status resolves strictly to the Enum object in SQLAlchemy
-    if hasattr(overall_status, "value"):
-        overall_status = overall_status.value
+    if not isinstance(overall_status, str):
+        overall_status = cast(str, getattr(overall_status, "value", "no_data"))
+    overall_status = cast(Literal["normal", "attention", "concern", "no_data"], overall_status)
 
     # ── ML / Anomaly fields ──────────────────────────────────────────────────
     user_model_result = await db.execute(

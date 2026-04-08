@@ -1,18 +1,113 @@
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any, Optional, cast
 from sqlalchemy.orm import Session
-from app.routers.schemas import ReportCreate
-from ai.brain import Brain
-from ai.diff_calc import matrix_calc
+from sqlalchemy import func
+from .brain import Brain
+from .diff_calc import matrix_calc
 from app.config import get_settings
-from app.data.tables import Users, Profiles, Injury, Report 
-from datetime import datetime, timezone
+from app.legacy.data_tables import Users, Profiles, Injury, Report, ProgressSnapshot
+from datetime import datetime, timezone, date
+import json
+import uuid
 
 settings = get_settings()
+
+def update_daily_snapshot(user_id: int, db: Session) -> None:
+    """Create or update today's progress snapshot for a user."""
+    user_id = int(user_id)
+    today = date.today()
+
+    todays_reports = (
+        db.query(Report)
+        .filter(Report.user_id == user_id, func.date(Report.created_at) == today)
+        .all()
+    )
+
+    session_count = len(todays_reports)
+    if session_count == 0:
+        return
+
+    overall_scores = [r.overall_score for r in todays_reports if r.overall_score is not None]
+    gvi_scores = [r.gvi_score for r in todays_reports if r.gvi_score is not None]
+
+    avg_overall_score = (
+        sum(overall_scores) / len(overall_scores) if overall_scores else None
+    )
+    avg_gvi_score = sum(gvi_scores) / len(gvi_scores) if gvi_scores else None
+
+    snapshot = (
+        db.query(ProgressSnapshot)
+        .filter(ProgressSnapshot.user_id == user_id, ProgressSnapshot.date == today)
+        .first()
+    )
+
+    daily_stats = {
+        "reports_processed": session_count,
+        "report_ids": [r.id for r in todays_reports],
+    }
+
+    if snapshot:
+        setattr(snapshot, "avg_overall_score", avg_overall_score)
+        setattr(snapshot, "avg_gvi_score", avg_gvi_score)
+        setattr(snapshot, "session_count", session_count)
+        setattr(snapshot, "daily_stats", daily_stats)
+    else:
+        snapshot = ProgressSnapshot(
+            user_id=user_id,
+            date=today,
+            avg_overall_score=avg_overall_score,
+            avg_gvi_score=avg_gvi_score,
+            session_count=session_count,
+            daily_stats=daily_stats,
+        )
+        db.add(snapshot)
+
+    db.commit()
 
 class Analysis:
     def __init__(self, db: Session):
         self.db = db
         self.brain = Brain()
+        self.CLINICAL_NORMS: Dict[str, float] = {
+            "gvi": 100.0,
+            "cadence": 110.0,
+            "avg_speed": 1.3,
+            "knee_rom": 120.0,
+            "stance_swing_ratio": 1.5,
+        }
+        # region agent log
+        self._debug_log(
+            "H0",
+            "analysis.py:__init__",
+            "Analysis class initialized",
+            {"db_class": type(db).__name__},
+        )
+        # endregion
+
+    def _debug_log(self, hypothesis_id: str, location: str, message: str, data: Dict[str, Any]) -> None:
+        try:
+            payload = {
+                "sessionId": "b8f56c",
+                "id": f"log_{uuid.uuid4().hex}",
+                "timestamp": int(datetime.now(timezone.utc).timestamp() * 1000),
+                "runId": "pre-fix",
+                "hypothesisId": hypothesis_id,
+                "location": location,
+                "message": message,
+                "data": data,
+            }
+            line = json.dumps(payload, ensure_ascii=True) + "\n"
+            wrote = False
+            for path in ("C:/Users/user/Desktop/nmove/debug-b8f56c.log", "debug-b8f56c.log"):
+                try:
+                    with open(path, "a", encoding="utf-8") as f:
+                        f.write(line)
+                    wrote = True
+                except Exception:
+                    continue
+            if not wrote:
+                return
+        except Exception:
+            pass
     
     def get_previous_reports(self, user_id: int, limit: int = 3) -> List[Dict]:
         reports = (
@@ -50,11 +145,57 @@ class Analysis:
                 "recommendations": r.recommendations,
                 "overall_score": r.overall_score,
                 "gvi_score": r.gvi_score,
-                "created_at": r.created_at.isoformat() if r.created_at else None,
+                "created_at": r.created_at.isoformat() if r.created_at is not None else None,
             })
         
         return report_summaries
-        return report_data
+
+    def get_user_previous_reports(self, user_id: int, limit: int = 3) -> List[Dict]:
+        return self.get_previous_reports(user_id, limit)
+
+    def _flatten_metrics(self, metrics: Dict[str, Any]) -> Dict[str, float]:
+        rhythm = metrics.get("rhythm_pace", {})
+        mechanics = metrics.get("joint_mechanics", {})
+        knee = mechanics.get("knee_angle", {})
+        variability = metrics.get("variability", {})
+        phases = metrics.get("symmetry_phases", {})
+
+        return {
+            "gvi": float(variability.get("gvi", 0.0)),
+            "cadence": float(rhythm.get("cadence", 0.0)),
+            "avg_speed": float(rhythm.get("avg_speed", 0.0)),
+            "knee_rom": float(knee.get("amplitude", 0.0)),
+            "stance_swing_ratio": float(phases.get("stance_swing_ratio", 0.0)),
+        }
+
+    def _detect_clinical_pattern(self, matrix: Dict[str, Dict[str, Any]], current_pain: int) -> Dict[str, str]:
+        statuses = [
+            str(metric.get("vs_clinical", {}).get("status", "Unknown"))
+            for metric in matrix.values()
+        ]
+        critical_count = sum(1 for s in statuses if s == "Critical")
+        warning_count = sum(1 for s in statuses if s == "Warning")
+
+        if critical_count > 0 or current_pain >= 8:
+            return {
+                "status": "Critical",
+                "description": "Gait analysis indicates high-risk deviations that require caution.",
+                "recommendation": "Reduce load and contact your clinician for guided recovery adjustments.",
+            }
+        if warning_count > 1 or current_pain >= 4:
+            return {
+                "status": "Warning",
+                "description": "Gait analysis shows moderate deviations from expected recovery targets.",
+                "recommendation": "Continue rehab with focus on form and monitor pain/symmetry trends daily.",
+            }
+        return {
+            "status": "Normal",
+            "description": "Gait metrics are within acceptable range for the current stage.",
+            "recommendation": "Maintain current progression and keep consistency in rehabilitation sessions.",
+        }
+
+    def _calculate_smart_score(self, matrix: Dict[str, Dict[str, Any]], status: str) -> float:
+        return self._calculate_score(matrix, status)
 
     def _flatten_data(self, data: Dict) -> Dict[str, Any]:
         try:
@@ -93,90 +234,6 @@ class Analysis:
         except Exception as e:
             print(f"Ошибка при обработке полных данных: {e}")
             return {}
-    
-    def generate_report(self, report_data: ReportCreate) -> Report:
-        user = self.db.query(Users).filter(Users.id == report_data.user_id).first()
-        if not user:
-            raise ValueError(f"User {report_data.user_id} not found")
-
-        profile = self.db.query(Profiles).filter(Profiles.id == user.id).first()
-        injury = self.db.query(Injury).filter(Injury.user_id == user.id).first()
-
-        previous_reports = self.get_user_previous_reports(
-            user.id, limit=settings.CONTEXT_WINDOW_SIZE
-        )
-
-        days_post_op = None
-        if injury and injury.diagnosis_date:
-            days_post_op = (datetime.now(timezone.utc) - injury.diagnosis_date.replace(tzinfo=timezone.utc)).days
-
-        user_payload = {
-            "personal_info": {
-                "age": profile.age if profile else None,
-                "gender": profile.gender.value if profile else None,
-                "weight": profile.weight if profile else None,
-                "height": profile.height if profile else None,
-                "leg_length": profile.leg_length if profile else None,
-                "shoe_size": profile.shoe_size if profile else None,
-            },
-            "injury_context": {
-                "has_injury": profile.have_injury if profile else False,
-                "body_part": [bp.value for bp in injury.body_part] if injury else [],
-                "injury_type": [it.value for it in injury.injury_type] if injury else [],
-                "side": injury.side.value if injury else None,
-                "placed_leg": injury.placed_leg.value if injury else profile.dominant_leg.value,
-                "pain_level": injury.pain_level if injury else 0,
-                "days_since_diagnosis": days_post_op
-            }
-        }
-
-        session_metrics = report_data.session_metrics.model_dump()
-    
-        ai_narrative = self.brain.analyze_gait(
-            user_profile=user_payload,
-            session_metrics=session_metrics,
-            previous_reports=previous_reports
-        )
-
-        personal_targets = self.brain.extract_targets(ai_narrative)
-        flat_user_data = self._flatten_metrics(session_metrics)
-    
-        final_targets = {k: personal_targets.get(k, self.CLINICAL_NORMS.get(k, 0)) for k in flat_user_data.keys()}
-    
-        analysis_matrix = matrix_calc(
-            user_data=flat_user_data,
-            clinical_norm=self.CLINICAL_NORMS,
-            personal_target=final_targets
-        )
-
-        current_pain = injury.pain_level if injury else 0
-        clinical_pattern = self._detect_clinical_pattern(analysis_matrix, current_pain)
-        overall_score = self._calculate_smart_score(analysis_matrix, clinical_pattern["status"])
-
-        new_report = Report(
-            user_id=user.id,
-            activity_type=session_metrics.get("activity_type", ["walking"]),
-            
-            rhythm_pace=session_metrics["rhythm_pace"],
-            joint_mechanics=session_metrics["joint_mechanics"],
-            variability=session_metrics["variability"],
-            symmetry_phases=session_metrics["symmetry_phases"],
-        
-            protocol_reference=ai_narrative,
-            personalized_target=final_targets,
-            analysis_matrix=analysis_matrix,
-            clinical_narrative=clinical_pattern["description"],
-            recommendations=clinical_pattern["recommendation"],
-            status=clinical_pattern["status"],
-        
-            overall_score=overall_score,
-            gvi_score=flat_user_data.get("gvi", 0)
-        )
-
-        self.db.add(new_report)
-        self.db.commit()
-        self.db.refresh(new_report)
-        return new_report
     
     def _calculate_score(self, matrix: Dict, status: str) -> float:
         weights = {
@@ -245,7 +302,15 @@ class Analysis:
         self.db.refresh(profile)
         return True
 
-    def generate_report(self, report_data: ReportCreate) -> Report:
+    def generate_report(self, report_data: Any) -> Report:
+        # region agent log
+        self._debug_log(
+            "H1A",
+            "analysis.py:generate_report_v1:entry",
+            "Entered first generate_report declaration",
+            {"user_id": getattr(report_data, "user_id", None), "line_hint": 97},
+        )
+        # endregion
         user = self.db.query(Users).filter(Users.id == report_data.user_id).first()
         if not user:
             raise ValueError(f"User {report_data.user_id} not found")
@@ -254,24 +319,62 @@ class Analysis:
         injury = self.db.query(Injury).filter(Injury.user_id == user.id).first()
 
         # История
-        previous_reports = self.get_user_previous_reports(user.id, limit=settings.CONTEXT_WINDOW_SIZE)
+        # region agent log
+        self._debug_log(
+            "H2",
+            "analysis.py:generate_report_v2:before_previous_reports",
+            "About to call previous reports accessor",
+            {
+                "has_get_user_previous_reports": hasattr(self, "get_user_previous_reports"),
+                "has_get_previous_reports": hasattr(self, "get_previous_reports"),
+            },
+        )
+        # endregion
+        previous_reports = self.get_user_previous_reports(cast(int, user.id), limit=settings.CONTEXT_WINDOW_SIZE)
 
         # Дни после операции
         days_post_op = None
-        if injury and injury.diagnosis_date:
+        if injury is not None and injury.diagnosis_date is not None:
             days_post_op = (datetime.now(timezone.utc) - injury.diagnosis_date.replace(tzinfo=timezone.utc)).days
 
         # Сборка Payload для AI
         user_payload = {
             "personal_info": {
+                "user_id": user.id,
+                "public_code": user.public_code,
+                "name": user.name,
+                "city": user.city,
+                "email": user.email,
+                "registered_at": user.created_at.isoformat() if user.created_at is not None else None,
                 "age": profile.age if profile else None,
                 "gender": profile.gender.value if profile else None,
-                # ... остальные поля ...
+                "weight": profile.weight if profile else None,
+                "height": profile.height if profile else None,
+                "nationality": profile.nationality if profile else None,
+                "have_injury": profile.have_injury if profile else None,
+                "have_banomaly": profile.have_banomaly if profile else None,
+                "banomaly": profile.banomaly if profile else None,
+                "shoe_size": profile.shoe_size if profile else None,
+                "leg_length": profile.leg_length if profile else None,
+                "dominant_leg": profile.dominant_leg.value if profile is not None and profile.dominant_leg is not None else None,
+                "lifestyle": profile.lifestyle if profile else None,
+                "smoke": profile.smoke if profile else None,
+                "alcohol": profile.alcohol if profile else None,
+                "notes": profile.notes if profile else None,
+                "profile_created_at": profile.created_at.isoformat() if profile is not None and profile.created_at is not None else None,
+                "baseline_report_id": profile.baseline_report_id if profile else None,
             },
             "injury_context": {
                 "pain_level": injury.pain_level if injury else 0,
                 "days_since_diagnosis": days_post_op,
-                # ... остальные поля ...
+                "injury_id": injury.id if injury else None,
+                "user_id": injury.user_id if injury else None,
+                "body_part": [bp.value for bp in injury.body_part] if injury is not None and injury.body_part is not None else [],
+                "side": injury.side.value if injury is not None and injury.side is not None else None,
+                "injury_type": [it.value for it in injury.injury_type] if injury is not None and injury.injury_type is not None else [],
+                "diagnosis_date": injury.diagnosis_date.isoformat() if injury is not None and injury.diagnosis_date is not None else None,
+                "is_active": injury.is_active if injury else None,
+                "placed_leg": injury.placed_leg.value if injury is not None and injury.placed_leg is not None else None,
             }
         }
 
@@ -288,6 +391,18 @@ class Analysis:
         personal_targets = self.brain.extract_targets(ai_narrative)
         
         # 3. Подготовка данных для Матрицы
+        # region agent log
+        self._debug_log(
+            "H3",
+            "analysis.py:generate_report_v2:before_flatten",
+            "About to flatten metrics and access clinical norms",
+            {
+                "has_flatten_metrics": hasattr(self, "_flatten_metrics"),
+                "has_clinical_norms": hasattr(self, "CLINICAL_NORMS"),
+                "metrics_keys": list(session_metrics.keys()) if isinstance(session_metrics, dict) else [],
+            },
+        )
+        # endregion
         flat_user_data = self._flatten_metrics(session_metrics)
         final_targets = {k: personal_targets.get(k, self.CLINICAL_NORMS.get(k, 0)) for k in flat_user_data.keys()}
 
@@ -304,15 +419,25 @@ class Analysis:
             flat_baseline = self._flatten_metrics(baseline_raw)
 
         # --- [UPDATED] 5. РАСЧЕТ МАТРИЦЫ (С BASELINE) ---
+        # region agent log
+        self._debug_log(
+            "H4",
+            "analysis.py:generate_report_v2:before_matrix_calc",
+            "About to call matrix_calc",
+            {
+                "kwargs": ["user_data", "clinical_norm", "personal_target", "baseline_data"],
+                "has_baseline": flat_baseline is not None,
+            },
+        )
+        # endregion
         analysis_matrix = matrix_calc(
             user_data=flat_user_data,
             clinical_norm=self.CLINICAL_NORMS,
-            personal_target=final_targets,
-            baseline_data=flat_baseline  # <--- ВОТ ЗДЕСЬ ПРОИСХОДИТ МАГИЯ
+            baseline_data=flat_baseline  
         )
 
         # 6. Паттерны и Скоринг
-        current_pain = injury.pain_level if injury else 0
+        current_pain = cast(int, injury.pain_level) if injury is not None else 0
         clinical_pattern = self._detect_clinical_pattern(analysis_matrix, current_pain)
         overall_score = self._calculate_smart_score(analysis_matrix, clinical_pattern["status"])
 
@@ -338,7 +463,15 @@ class Analysis:
         self.db.commit()
         
         # --- [NEW] 8. ОБНОВЛЕНИЕ ГРАФИКОВ ПРОГРЕССА ---
-        update_daily_snapshot(user.id, self.db)
+        # region agent log
+        self._debug_log(
+            "H5",
+            "analysis.py:generate_report_v2:before_snapshot_update",
+            "About to call update_daily_snapshot",
+            {"defined_in_globals": "update_daily_snapshot" in globals()},
+        )
+        # endregion
+        update_daily_snapshot(cast(int, user.id), self.db)
 
         self.db.refresh(new_report)
         return new_report

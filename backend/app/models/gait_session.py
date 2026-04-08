@@ -1,6 +1,7 @@
 import enum
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     DateTime,
@@ -16,6 +17,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.models.user import User
+    from app.models.metrics_snapshot import MetricsSnapshot
+    from app.models.gait_reading import GaitReading
 
 class SessionStatus(str, enum.Enum):
     ingested = "ingested"

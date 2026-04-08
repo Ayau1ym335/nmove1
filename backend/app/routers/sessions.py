@@ -5,20 +5,20 @@ import uuid
 from datetime import datetime, timezone
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Form
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import require_patient, require_doctor, require_any_role
-from app.db.session import get_db
-from app.models.gait_session import GaitSession
-from app.models.user import User
-from app.schemas.ingest import IngestRequest, IngestResponse
-from app.schemas.session import (
+from ..core.dependencies import require_patient, require_doctor, require_any_role
+from ..db.session import get_db
+from ..models.gait_session import GaitSession
+from ..models.user import User
+from ..schemas.ingest import IngestRequest, IngestResponse
+from ..schemas.session import (
     PatchSessionStatusRequest, SessionSummary, SessionDetail, 
     PatientSessionListResponse, SessionStatusUpdateResponse, SessionStatusEnum
 )
-from app.services import ingest_service, session_service
+from ..services import ingest_service, session_service
 
 logger = logging.getLogger(__name__)
 
@@ -56,10 +56,10 @@ async def list_my_sessions(
     return PatientSessionListResponse(
         patient_id=current_user.id,
         sessions=[SessionSummary.model_validate(s) for s in sessions],
-        total=total,
+        total=total if total is not None else 0,
         page=page,
         page_size=page_size,
-        has_more=(offset + len(sessions)) < total,
+        has_more=(offset + len(sessions)) < (total if total is not None else 0),
     )
 
 
@@ -120,7 +120,7 @@ async def patch_session_status(
     if current_user.role == "patient" and session.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
     if current_user.role == "doctor" and session.doctor_id != current_user.id:
-        pass # Doctor can always update status on assigned session, otherwise allowed if they are assigned.
+        raise HTTPException(status_code=403, detail="Not authorized")
     
     session, previous = await session_service.update_session_status(db, session_id, body.status, body.error_message)
     
@@ -166,6 +166,7 @@ async def start_session(
     session = GaitSession(
         user_id=current_user.id,
         device_id=device_id.strip() if device_id else None,
+        leg_side=leg_side,
         started_at=now,
         ended_at=None,
     )
@@ -208,7 +209,7 @@ async def close_session(
 
     return {
         "session_id": str(session.id),
-        "ended_at": session.ended_at.isoformat(),
+        "ended_at": (session.ended_at or now).isoformat(),
         "duration_seconds": session.duration_seconds,
     }
 
@@ -230,3 +231,34 @@ async def ingest_readings(
 ) -> IngestResponse:
     gait_session = await ingest_service.validate_session_ownership(db, data.session_id, current_user.id)
     return await ingest_service.write_readings(db, gait_session, data)
+
+
+@router.post(
+    "/ingest/bin",
+    response_model=IngestResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Ingest IMU binary .bin payload",
+)
+async def ingest_readings_bin(
+    session_id: uuid.UUID = Form(...),
+    leg_side: Literal["left", "right"] = Form(...),
+    sensor_slot: Literal[1, 2] = Form(1),
+    device_id: str | None = Form(None),
+    imu_file: UploadFile = File(...),
+    current_user: User = Depends(require_patient),
+    db: AsyncSession = Depends(get_db),
+) -> IngestResponse:
+    filename = imu_file.filename or ""
+    if not filename.lower().endswith(".bin"):
+        raise HTTPException(status_code=400, detail="imu_file must be a .bin file")
+
+    raw_bytes = await imu_file.read()
+    gait_session = await ingest_service.validate_session_ownership(db, session_id, current_user.id)
+    ingest_request = ingest_service.build_ingest_request_from_bin(
+        raw_bytes=raw_bytes,
+        session_id=session_id,
+        leg_side=leg_side,
+        device_id=device_id,
+        sensor_slot=sensor_slot,
+    )
+    return await ingest_service.write_readings(db, gait_session, ingest_request)

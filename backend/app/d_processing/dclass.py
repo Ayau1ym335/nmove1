@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
-import datetime
+from datetime import datetime
 import numpy as np
 from typing import Optional, Dict
-from data.tables import ActivityType
+from app.legacy.data_tables import ActivityType
 
 @dataclass
 class Metadata:
@@ -19,7 +19,7 @@ class SensorCalibration:
     acc_bias: np.ndarray 
     acc_scale: np.ndarray  
     gyro_bias: np.ndarray 
-    gyro_scale: np.ndarray = None
+    gyro_scale: Optional[np.ndarray] = None
     rotation_matrix: Optional[np.ndarray] = None 
     
     def to_dict(self) -> dict:
@@ -48,6 +48,16 @@ class StepEvent:
 
 @dataclass
 class GaitCycle:
+    hs_idx: int
+    to_idx: int
+    next_hs_idx: int
+    ms_idx: int
+    duration: float
+    stride_time: float
+    stance_time: float
+    swing_time: float
+    cadence: float
+
     def to_dict(self) -> Dict:
         return {
             'hs': self.hs_idx,
@@ -86,7 +96,7 @@ class DetectorConfig:
 
 @dataclass
 class FilterConfig:
-    cutoff_frequencies: Dict[ActivityType, float] = None
+    cutoff_frequencies: Optional[Dict[ActivityType, float]] = None
     filter_order: int = 4  
     transition_duration: float = 0.5  
     transition_type: str = "cosine"  

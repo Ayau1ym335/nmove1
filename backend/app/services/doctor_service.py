@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal, cast
 from uuid import UUID
 
 from sqlalchemy import text
@@ -53,7 +53,8 @@ async def apply_filters_and_paginate(
 
     for r in rows:
         status_val = r.get("overall_status")
-        if hasattr(status_val, 'value'): status_val = status_val.value
+        if status_val is not None and hasattr(status_val, "value"):
+            status_val = getattr(status_val, "value")
         
         if status_val == "concern": total_concern += 1
         elif status_val == "attention": total_attention += 1
@@ -168,10 +169,14 @@ from app.schemas.doctor import (
 )
 from app.utils.timeseries import gap_fill_chart
 
-def resolve_status_badge(interpretation_status: str | None) -> str:
+def resolve_status_badge(
+    interpretation_status: str | None,
+) -> Literal["normal", "attention", "concern", "no_data"]:
     if interpretation_status is None:
         return "no_data"
-    return interpretation_status
+    if interpretation_status in {"normal", "attention", "concern", "no_data"}:
+        return cast(Literal["normal", "attention", "concern", "no_data"], interpretation_status)
+    return "no_data"
 
 def _build_movement_age_summary(session_rows: list, bio_age: int | None) -> MovementAgeSummaryDetail:
     vals = [r["movement_age"] for r in session_rows if r.get("movement_age") is not None]
@@ -236,7 +241,8 @@ async def _query_session_history(db: AsyncSession, patient_id: UUID, doctor_id: 
         db.execute(q_data, {"patient_id": str(patient_id), "doctor_id": str(doctor_id), "limit": limit, "offset": offset}),
         db.execute(q_count, {"patient_id": str(patient_id), "doctor_id": str(doctor_id)})
     )
-    return [dict(r) for r in res_data.mappings().all()], res_count.scalar()
+    raw_count = res_count.scalar()
+    return [dict(r) for r in res_data.mappings().all()], int(raw_count or 0)
 
 async def _query_chart_data(db: AsyncSession, patient_id: UUID, doctor_id: UUID, trend_days: int) -> list[dict]:
     q = text("""
@@ -449,7 +455,7 @@ async def get_patient_detail(
     output = PatientDetail(
         patient_id=patient_id,
         full_name=user_row.get("full_name"),
-        email=user_row.get("email"),
+        email=str(user_row.get("email") or ""),
         bio_age=user_row.get("bio_age"),
         doctor_id=doctor_id,
         first_assigned=first_assigned,

@@ -17,4 +17,6 @@ def render_pdf(data) -> bytes:
     html_string = template.render(data=data)
     base_url = f"file://{_TEMPLATE_DIR}/"
     pdf_bytes = weasyprint.HTML(string=html_string, base_url=base_url).write_pdf()
+    if pdf_bytes is None:
+        raise RuntimeError("Failed to render PDF")
     return pdf_bytes

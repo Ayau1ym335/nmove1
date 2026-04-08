@@ -83,7 +83,8 @@ def list_patient_reports(
         objects = client.list_objects(BUCKET_NAME, prefix=prefix, recursive=True)
         
         for obj in objects:
-            if obj.is_dir: continue
+            if obj.is_dir or obj.object_name is None:
+                continue
             
             # Fresh presigned URL
             url = generate_presigned_url(obj.object_name, 48)
@@ -95,7 +96,7 @@ def list_patient_reports(
             results.append(ReportListItem(
                 object_name=obj.object_name,
                 generated_at=dt,
-                size_bytes=obj.size,
+                size_bytes=int(obj.size or 0),
                 url=url,
                 expires_at=dt + timedelta(hours=48),
                 days_window=None

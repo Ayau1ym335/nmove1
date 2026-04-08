@@ -45,8 +45,8 @@ def compute_gait_metrics(readings: list) -> dict:
     if len(peak_values) >= 4:
         even_peaks = peak_values[::2]
         odd_peaks = peak_values[1::2]
-        mean_even = np.mean(even_peaks)
-        mean_odd = np.mean(odd_peaks)
+        mean_even = float(np.mean(even_peaks))
+        mean_odd = float(np.mean(odd_peaks))
         
         max_val = max(mean_even, mean_odd)
         ratio = min(mean_even, mean_odd) / max_val if max_val != 0 else 1.0
