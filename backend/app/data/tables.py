@@ -84,14 +84,14 @@ class DoctorPatient(Base):
 
     id = Column(Integer, primary_key=True)
     doctor_id = Column(Integer, ForeignKey("doctor.id"))
-    patient_id = Column(Integer, ForeignKey("user.id"))
+    patient_id = Column(Integer, ForeignKey("users.id"))
 
     access_granted_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     access_revoked_at = Column(DateTime, nullable=True)
     notes = Column(String, nullable=True)  # Заметки врача о пациенте
 
 class Users(Base):
-    __tablename__ = "user"
+    __tablename__ = "users"
     id = Column(Integer, primary_key=True, autoincrement=True)
     public_code = Column(String(8), unique=True)
     devices = relationship("Devices", back_populates="user", cascade="all, delete-orphan")
@@ -122,7 +122,8 @@ class Users(Base):
     profile = relationship("Profiles", back_populates="user", uselist=False, cascade="all, delete-orphan")
     walking_sessions = relationship("WalkingSessions", back_populates="user", cascade="all, delete-orphan")
     progress_records = relationship("UserProgress", back_populates="user", cascade="all, delete-orphan")
-    medical_reports = relationship("MedicalReport", back_populates="user", cascade="all, delete-orphan")
+    reports = relationship("Report", back_populates="user", cascade="all, delete-orphan")
+    medical_reports = relationship("MedicalReport", back_populates="patient", cascade="all, delete-orphan")
     Injury = relationship("Injury",back_populates="user",cascade="all, delete-orphan",uselist=False)
 
     __table_args__ = (
@@ -131,7 +132,7 @@ class Users(Base):
 
 class Profiles(Base):
     __tablename__ = 'profiles'
-    id = Column(Integer, ForeignKey("user.id"), primary_key=True)
+    id = Column(Integer, ForeignKey("users.id"), primary_key=True)
     age = Column(Integer, nullable=False)
     gender = Column(SQLEnum(GenderEnum), nullable=False)
     weight = Column(Float, nullable=False)
@@ -155,7 +156,7 @@ class Profiles(Base):
     created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     baseline_report_id = Column(Integer, ForeignKey("reports.id"), nullable=True, comment="ID отчета, принятого за эталон")
 
-    baseline_report = relationship("Report", foreign_keys=[baseline_report_id], post_update=True)
+    baseline_report = relationship("Report", foreign_keys=[baseline_report_id], post_update=True, back_populates="baseline_report")
     user = relationship("Users", back_populates="profile")
 
     __table_args__ = (
@@ -166,7 +167,7 @@ class Profiles(Base):
 class Injury(Base):
     __tablename__ = 'Injury'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("user.id"), unique=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     body_part = Column(ARRAY(SQLEnum(BodyPart)), nullable=False)
     side = Column(SQLEnum(SideEnum), default=SideEnum.RIGHT)
     injury_type = Column(ARRAY(SQLEnum(InjuryType)), nullable=False)
@@ -226,7 +227,7 @@ class Doctors(Base):
 class Devices(Base):
     __tablename__ = "devices"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     device_id = Column(String(50), unique=True, nullable=False)
     placement = Column(Integer, nullable=False)
     side = Column(SQLEnum(SideEnum), nullable=False)
@@ -236,7 +237,7 @@ class Devices(Base):
 class WalkingSessions(Base):
     __tablename__ = "walking_sessions"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     
     status = Column(SQLEnum(SessionStatus), nullable=False, default=SessionStatus.STOPPED)
     is_processed = Column(Boolean, default=False, nullable=False)
@@ -355,7 +356,7 @@ class Report(Base):
     anomalies = Column(JSON) 
 
     user = relationship("Users", back_populates="reports")
-    baseline_report = relationship("Profiles", back_populates="reports")
+    baseline_report = relationship("Profiles", back_populates="baseline_report")
 
 class ProgressSnapshot(Base):
     __tablename__ = 'progress_snapshots'
@@ -373,22 +374,6 @@ class ProgressSnapshot(Base):
     pain_level = Column(Integer)
     
     __table_args__ = (UniqueConstraint('user_id', 'date'),)
-
-class ChatSession(Base):
-    __tablename__ = "chat_sessions"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    report_id = Column(Integer, ForeignKey("reports.id"), nullable=True)
-    
-    session_name = Column(String, nullable=True)
-    chat_history = Column(JSON, nullable=True) 
-    is_active = Column(Boolean, default=True)
-    
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    user = relationship("User", back_populates="chat_sessions")
 
 class Exercises(Base):
         __tablename__ = "exercises"
@@ -422,7 +407,7 @@ class MedicalReport(Base):
     __tablename__ = "medical_reports"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    patient_id = Column(Integer, ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True)
+    patient_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     doctor_id = Column(Integer, ForeignKey("doctor.id", ondelete="SET NULL"), nullable=True)
     report_start_date = Column(DateTime, nullable=False)
     report_end_date = Column(DateTime, nullable=False)

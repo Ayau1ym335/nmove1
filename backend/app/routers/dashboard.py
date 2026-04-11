@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import require_any_role
 from app.db.session import get_db
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.models.gait_session import GaitSession
 from app.models.metrics_snapshot import MetricsSnapshot
 from app.models.exercise import Exercise
@@ -46,10 +46,10 @@ async def get_dashboard_summary(
     # -----------------------------------------------------
     # Authorization
     # -----------------------------------------------------
-    if current_user.role == "patient" and current_user.id != user_id:
+    if current_user.role == UserRole.patient and current_user.id != user_id:
         raise HTTPException(403, "Patients can only view their own dashboard")
 
-    if current_user.role == "doctor":
+    if current_user.role == UserRole.doctor:
         assigned = await db.execute(
             select(GaitSession)
             .where(GaitSession.user_id == user_id)

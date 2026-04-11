@@ -7,6 +7,7 @@ from app.models.gait_reading import GaitReading
 from app.models.metrics_snapshot import MetricsSnapshot, InterpretationStatus
 from app.models.exercise import Exercise, ExerciseDifficulty
 from app.models.user_model import UserModel
+from app.models.profile import Profile, Gender, Side
 
 __all__ = [
     "User",
@@ -19,4 +20,7 @@ __all__ = [
     "Exercise",
     "ExerciseDifficulty",
     "UserModel",
+    "Profile",
+    "Gender",
+    "Side",
 ]

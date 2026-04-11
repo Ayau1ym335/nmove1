@@ -14,6 +14,7 @@ from app.db.base import Base
 if TYPE_CHECKING:
     from app.models.session import AuthSession
     from app.models.gait_session import GaitSession
+    from app.models.profile import Profile
 
 
 class UserRole(str, enum.Enum):
@@ -70,5 +71,12 @@ class User(Base):
         "GaitSession",
         back_populates="user",
         cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+    profile: Mapped["Profile | None"] = relationship(  # noqa: F821
+        "Profile",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        uselist=False,
         lazy="selectin",
     )

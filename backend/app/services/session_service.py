@@ -54,8 +54,9 @@ async def update_session_status(
         raise HTTPException(status_code=404, detail="Session not found")
         
     previous_status = session.status
+    in_allowed = new_status in VALID_TRANSITIONS.get(previous_status, [])
 
-    if new_status not in VALID_TRANSITIONS.get(previous_status, []):
+    if not in_allowed:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Cannot transition from {previous_status} to {new_status}. Allowed: {VALID_TRANSITIONS.get(previous_status, [])}"

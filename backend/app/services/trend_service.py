@@ -1,4 +1,3 @@
-import asyncio
 from datetime import date, timedelta
 from typing import Any, cast
 import numpy as np
@@ -137,13 +136,14 @@ async def get_user_trends(
     from_date = date.today() - timedelta(days=days - 1)
     to_date = date.today()
 
-    # Fire all SQL trend queries in parallel
-    tasks = []
+    # Execute SQL trend queries sequentially on one AsyncSession.
+    # Running db.execute concurrently on the same session can trigger
+    # asyncpg/sqlalchemy errors like "another operation is in progress".
+    results: list[list[TrendDataPoint]] = []
     for m in metrics:
         metric_column = METRIC_COLUMN_MAP[m]
-        tasks.append(fetch_metric_series(db, user_id, metric_column, days, from_date, to_date))
-
-    results = await asyncio.gather(*tasks)
+        series = await fetch_metric_series(db, user_id, metric_column, days, from_date, to_date)
+        results.append(series)
 
     # Process sequential Python gap/stats builders
     series_tasks = [build_series_stats(res, m) for res, m in zip(results, metrics)]

@@ -3,9 +3,10 @@ import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from app.models.user import UserRole
+from app.models.profile import Gender, Side
 
 
 # ---------------------------------------------------------------------------
@@ -16,10 +17,28 @@ from app.models.user import UserRole
 class RegisterRequest(BaseModel):
     """Body for POST /auth/register."""
 
+    class ProfileCreate(BaseModel):
+        age: int = Field(..., ge=1, le=120)
+        gender: Gender
+        weight: float = Field(..., gt=20, lt=300)
+        height: float = Field(..., gt=80, lt=240)
+        nationality: str = Field(..., min_length=2, max_length=100)
+        have_injury: bool = False
+        have_banomaly: bool = False
+        banomaly: str | None = Field(default=None, max_length=255)
+        shoe_size: float = Field(..., gt=10, lt=60)
+        leg_length: float = Field(..., gt=20, lt=160)
+        dominant_leg: Side = Side.right
+        lifestyle: str = Field(..., min_length=2, max_length=100)
+        smoke: bool = False
+        alcohol: bool = False
+        notes: str | None = None
+
     email: EmailStr
     password: str = Field(..., min_length=8, max_length=128)
     role: Literal["patient", "doctor"] = "patient"
     full_name: str | None = None
+    profile: ProfileCreate | None = None
 
     @field_validator("password")
     @classmethod
@@ -32,6 +51,12 @@ class RegisterRequest(BaseModel):
         if not has_letter:
             raise ValueError("Password must contain at least one letter.")
         return v
+
+    @model_validator(mode="after")
+    def validate_profile_for_patient(self) -> "RegisterRequest":
+        if self.role == "patient" and self.profile is None:
+            raise ValueError("Patient registration requires profile data.")
+        return self
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -1,84 +1,117 @@
+import uuid
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import Any, cast
-from app.legacy.data_tables import get_db, Profiles
-from app.ai.analysis import Analysis 
+from pydantic import BaseModel
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.session import get_db
+from app.models.gait_session import GaitSession
+from app.models.metrics_snapshot import MetricsSnapshot
+from app.models.profile import Profile
+from app.models.user import User
 
 router = APIRouter(prefix="/api/baseline", tags=["Baseline"])
+
+
+class BaselineRecordRequest(BaseModel):
+    user_id: uuid.UUID
+    gait_session_id: uuid.UUID | None = None
+
+
 @router.post("/record")
-def record_baseline(
-    report_data: Any,
-    db: Session = Depends(get_db)
+async def record_baseline(
+    body: BaselineRecordRequest,
+    db: AsyncSession = Depends(get_db),
 ):
-    analyzer = Analysis(db)
-    try:
-        new_report = analyzer.generate_report(report_data)
-        analyzer.set_baseline(report_id=cast(int, new_report.id), user_id=report_data.user_id)
-        return {
-            "status": "success",
-            "message": "Baseline successfully recorded",
-            "baseline_id": new_report.id,
-            "report_summary": {
-                "gvi": new_report.gvi_score,
-                "score": new_report.overall_score,
-                "ai_verdict": new_report.status
-            }
-        }
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+    user = await db.scalar(select(User).where(User.id == body.user_id))
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    profile = await db.scalar(select(Profile).where(Profile.user_id == body.user_id))
+    if profile is None:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    if body.gait_session_id is not None:
+        snapshot = await db.scalar(
+            select(MetricsSnapshot)
+            .where(MetricsSnapshot.gait_session_id == body.gait_session_id)
+            .order_by(desc(MetricsSnapshot.calculated_at))
+            .limit(1)
+        )
+    else:
+        snapshot = await db.scalar(
+            select(MetricsSnapshot)
+            .join(GaitSession, GaitSession.id == MetricsSnapshot.gait_session_id)
+            .where(GaitSession.user_id == body.user_id)
+            .order_by(desc(MetricsSnapshot.calculated_at))
+            .limit(1)
+        )
+
+    if snapshot is None:
+        raise HTTPException(status_code=404, detail="No processed metrics snapshot found")
+
+    profile.baseline_snapshot_id = snapshot.id
+    await db.flush()
+
+    return {
+        "status": "success",
+        "message": "Baseline snapshot recorded",
+        "baseline_snapshot_id": str(snapshot.id),
+        "user_id": str(body.user_id),
+        "recorded_at": datetime.now(UTC).isoformat(),
+    }
+
 
 @router.get("/{user_id}")
-def get_user_baseline(user_id: int, db: Session = Depends(get_db)):
-    profile = db.query(Profiles).filter(Profiles.id == user_id).first()
-    
-    if not profile or profile.baseline_report_id is None:
+async def get_user_baseline(user_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    profile = await db.scalar(select(Profile).where(Profile.user_id == user_id))
+    if not profile or profile.baseline_snapshot_id is None:
         return {
-            "has_baseline": False, 
-            "message": "Baseline not recorded yet. Please use /api/baseline/record first."
+            "has_baseline": False,
+            "message": "Baseline not recorded yet. Please use /api/baseline/record first.",
         }
-    
-    baseline = profile.baseline_report 
-    
+
+    baseline = await db.scalar(
+        select(MetricsSnapshot).where(MetricsSnapshot.id == profile.baseline_snapshot_id)
+    )
+    if baseline is None:
+        return {"has_baseline": False, "message": "Baseline snapshot reference is invalid."}
+
     return {
         "has_baseline": True,
         "baseline_info": {
-            "report_id": baseline.id,
-            "recorded_at": baseline.created_at.isoformat(),
-            "activity_type": baseline.activity_type,
-            "overall_score": baseline.overall_score
+            "snapshot_id": str(baseline.id),
+            "recorded_at": baseline.calculated_at.isoformat() if baseline.calculated_at else None,
         },
         "metrics": {
             "rhythm_pace": {
-                "cadence": baseline.rhythm_pace.get("cadence"),
-                "avg_speed": baseline.rhythm_pace.get("avg_speed"),
-                "avg_step_length": baseline.rhythm_pace.get("avg_step_length"),
-                "avg_stride_time": baseline.rhythm_pace.get("avg_stride_time")
+                "cadence": baseline.cadence,
+                "avg_speed": baseline.avg_speed,
+                "step_count": baseline.step_count,
+                "stride_length": baseline.stride_length,
             },
             "joint_mechanics": {
-                "knee_rom": baseline.joint_mechanics.get("knee_angle", {}).get("amplitude"),
-                "hip_rom": baseline.joint_mechanics.get("hip_angle", {}).get("amplitude"),
-                "knee_mean": baseline.joint_mechanics.get("knee_angle", {}).get("mean"),
-                "hip_mean": baseline.joint_mechanics.get("hip_angle", {}).get("mean")
+                "hip_rotation_rom": baseline.hip_rotation_rom,
+                "ankle_pushoff_proxy": baseline.ankle_pushoff_proxy,
+                "vertical_oscillation": baseline.vertical_oscillation,
             },
             "variability": {
-                "gvi": baseline.gvi_score,
-                "step_time_variability": baseline.variability.get("step_time_variability"),
-                "knee_angle_variability": baseline.variability.get("knee_angle_variability"),
-                "stride_length_variability": baseline.variability.get("stride_length_variability")
+                "stride_time_cv": baseline.stride_time_cv,
+                "trunk_sway_rms": baseline.trunk_sway_rms,
             },
             "symmetry_phases": {
-                "stance_swing_ratio": baseline.symmetry_phases.get("stance_swing_ratio"),
-                "avg_impact_force": baseline.symmetry_phases.get("avg_impact_force"),
-                "double_support_time": baseline.symmetry_phases.get("double_support_time"),
-                "avg_stance_time": baseline.symmetry_phases.get("avg_stance_time"),
-                "avg_swing_time": baseline.symmetry_phases.get("avg_swing_time")
-            }
+                "symmetry_score": baseline.symmetry_score,
+                "stance_phase_pct": baseline.stance_phase_pct,
+                "double_support_pct": baseline.double_support_pct,
+            },
         },
         "clinical_context": {
-            "status": baseline.status,
-            "narrative": baseline.clinical_narrative,
-            "recommendations": baseline.recommendations
-        }
+            "interpretation_status": baseline.interpretation_status.value,
+            "movement_age": baseline.movement_age,
+            "bio_age": baseline.bio_age,
+            "movement_age_delta": baseline.movement_age_delta,
+            "stability_score": baseline.stability_score,
+        },
     }

@@ -9,7 +9,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, status
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -22,6 +22,7 @@ from app.core.security import (
 )
 from app.models.session import AuthSession
 from app.models.user import User
+from app.models.profile import Profile
 from app.schemas.auth import (
     LoginRequest,
     RefreshResponse,
@@ -77,6 +78,42 @@ async def register_user(db: AsyncSession, data: RegisterRequest) -> RegisterResp
         is_active=True,
     )
     db.add(user)
+
+    if data.role == "patient" and data.profile is not None:
+        # Fail fast with a clear message if DB schema is behind code.
+        # This prevents opaque "relation does not exist" runtime errors.
+        profiles_table_exists = await db.scalar(
+            text("SELECT to_regclass('public.profiles')")
+        )
+        if profiles_table_exists is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=(
+                    "Registration is temporarily unavailable: profiles schema is missing. "
+                    "Run database migrations (alembic upgrade head)."
+                ),
+            )
+
+        profile = Profile(
+            user=user,
+            age=data.profile.age,
+            gender=data.profile.gender,
+            weight=data.profile.weight,
+            height=data.profile.height,
+            nationality=data.profile.nationality,
+            have_injury=data.profile.have_injury,
+            have_banomaly=data.profile.have_banomaly,
+            banomaly=data.profile.banomaly,
+            shoe_size=data.profile.shoe_size,
+            leg_length=data.profile.leg_length,
+            dominant_leg=data.profile.dominant_leg,
+            lifestyle=data.profile.lifestyle,
+            smoke=data.profile.smoke,
+            alcohol=data.profile.alcohol,
+            notes=data.profile.notes,
+        )
+        db.add(profile)
+
     await db.commit()
     await db.refresh(user)
 

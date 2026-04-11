@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..core.dependencies import require_patient, require_doctor, require_any_role
 from ..db.session import get_db
 from ..models.gait_session import GaitSession
-from ..models.user import User
+from ..models.user import User, UserRole
 from ..schemas.ingest import IngestRequest, IngestResponse
 from ..schemas.session import (
     PatchSessionStatusRequest, SessionSummary, SessionDetail, 
@@ -93,7 +93,7 @@ async def get_session_detail(
 ) -> SessionDetail:
     session = await session_service.get_session_or_404(db, session_id)
     
-    if current_user.role == "patient":
+    if current_user.role == UserRole.patient:
         if session.user_id != current_user.id:
             raise HTTPException(status_code=403, detail="Not authorized to access this session")
     else:
@@ -117,9 +117,9 @@ async def patch_session_status(
 ) -> SessionStatusUpdateResponse:
     session = await session_service.get_session_or_404(db, session_id)
     
-    if current_user.role == "patient" and session.user_id != current_user.id:
+    if current_user.role == UserRole.patient and session.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
-    if current_user.role == "doctor" and session.doctor_id != current_user.id:
+    if current_user.role == UserRole.doctor and session.doctor_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
     
     session, previous = await session_service.update_session_status(db, session_id, body.status, body.error_message)

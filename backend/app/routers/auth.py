@@ -12,7 +12,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import require_any_role
+from app.core.dependencies import require_any_role, require_patient
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.auth import (
@@ -220,7 +220,7 @@ async def logout(
     tags=["auth"],
 )
 async def patient_only_test(
-    current_user: User = Depends(require_any_role),
+    current_user: User = Depends(require_patient),
 ) -> dict:
     """Stub route protected by patient role check.
 
@@ -231,16 +231,4 @@ async def patient_only_test(
     Note: This route is intentionally kept simple for Day 1 testing.
     Replace with a real patient dashboard endpoint in Day 2.
     """
-    from app.models.user import UserRole
-
-    if current_user.role != UserRole.patient:
-        logger.warning(
-            "Role guard failed on patient-only-test: user=%s role=%s",
-            current_user.id,
-            current_user.role,
-        )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Patient access required",
-        )
     return {"message": "Patient access confirmed", "user_id": str(current_user.id)}

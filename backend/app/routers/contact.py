@@ -3,7 +3,7 @@ from pydantic import BaseModel, EmailStr
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from config import get_settings
+from app.core.config import get_settings
 
 router = APIRouter(prefix="/api", tags=["contact"])
 

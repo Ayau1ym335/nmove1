@@ -13,6 +13,8 @@ from app.routers.sessions import router as sessions_router
 from app.routers.dashboard import router as dashboard_router
 from app.routers.trends import router as trends_router
 from app.routers.doctor import router as doctor_router
+from app.routers.contact import router as contact_router
+from app.baseline.baseline import router as baseline_router
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +94,8 @@ app.include_router(sessions_router)             # prefix="/sessions" set inside 
 app.include_router(dashboard_router)            # prefix="/dashboard" set inside router
 app.include_router(trends_router)               # prefix="/trends" set inside router
 app.include_router(doctor_router)               # prefix="/doctor" set inside router
+app.include_router(contact_router)              # prefix="/api" set inside router
+app.include_router(baseline_router)             # prefix="/api/baseline" set inside router
 
 # ---------------------------------------------------------------------------
 # Health check — full readiness probe: DB + Redis + MinIO
