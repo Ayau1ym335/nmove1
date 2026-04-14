@@ -79,8 +79,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=settings.CORS_ORIGINS,
+    # Bearer JWT in Authorization header — no cookie credentials. False keeps
+    # ``allow_origins=["*"]`` valid per CORS (required for Flutter web + ngrok).
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

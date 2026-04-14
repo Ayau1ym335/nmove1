@@ -38,7 +38,12 @@ def upgrade() -> None:
         ),
         sa.Column(
             "gender",
-            sa.Enum("male", "female", name="profile_gender", create_type=False),
+            postgresql.ENUM(
+                "male",
+                "female",
+                name="profile_gender",
+                create_type=False,
+            ),
             nullable=False,
         ),
         sa.Column("weight", sa.Float(), nullable=False),
@@ -51,7 +56,12 @@ def upgrade() -> None:
         sa.Column("leg_length", sa.Float(), nullable=False),
         sa.Column(
             "dominant_leg",
-            sa.Enum("left", "right", name="profile_side", create_type=False),
+            postgresql.ENUM(
+                "left",
+                "right",
+                name="profile_side",
+                create_type=False,
+            ),
             nullable=False,
             server_default=sa.text("'right'"),
         ),

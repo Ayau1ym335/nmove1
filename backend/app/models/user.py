@@ -67,9 +67,12 @@ class User(Base):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
+    # gait_sessions.user_id and gait_sessions.doctor_id both reference users.id;
+    # SQLAlchemy needs an explicit child-side FK for this collection.
     gait_sessions: Mapped[list["GaitSession"]] = relationship(  # noqa: F821
         "GaitSession",
         back_populates="user",
+        foreign_keys="[GaitSession.user_id]",
         cascade="all, delete-orphan",
         lazy="selectin",
     )

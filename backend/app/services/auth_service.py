@@ -10,6 +10,7 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy import delete, select, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -21,7 +22,7 @@ from app.core.security import (
     verify_password,
 )
 from app.models.session import AuthSession
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.models.profile import Profile
 from app.schemas.auth import (
     LoginRequest,
@@ -73,7 +74,7 @@ async def register_user(db: AsyncSession, data: RegisterRequest) -> RegisterResp
     user = User(
         email=data.email,
         hashed_password=hashed,
-        role=data.role,
+        role=UserRole(data.role),
         full_name=data.full_name,
         is_active=True,
     )
@@ -114,8 +115,33 @@ async def register_user(db: AsyncSession, data: RegisterRequest) -> RegisterResp
         )
         db.add(profile)
 
-    await db.commit()
-    await db.refresh(user)
+    # Single transaction: ``get_db`` commits. Flush assigns server defaults and
+    # surfaces unique violations as IntegrityError (race on duplicate email).
+    try:
+        await db.flush()
+    except IntegrityError:
+        logger.warning("Registration failed: integrity error (likely duplicate email)")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered.",
+        ) from None
+
+    # Refresh scalar columns only — avoids selectin loads on gait_sessions etc.
+    # (keeps registration working if an unrelated table is briefly behind migrations).
+    await db.refresh(
+        user,
+        attribute_names=[
+            "id",
+            "email",
+            "hashed_password",
+            "role",
+            "full_name",
+            "is_active",
+            "bio_age",
+            "created_at",
+            "updated_at",
+        ],
+    )
 
     return RegisterResponse(user=UserOut.model_validate(user))
 

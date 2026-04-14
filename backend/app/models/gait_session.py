@@ -66,9 +66,10 @@ class GaitSession(Base):
     )
 
     user: Mapped["User"] = relationship(
-        "User", 
-        foreign_keys=[user_id], 
-        lazy="selectin"
+        "User",
+        foreign_keys=[user_id],
+        back_populates="gait_sessions",
+        lazy="selectin",
     )
     doctor: Mapped["User"] = relationship(
         "User", 

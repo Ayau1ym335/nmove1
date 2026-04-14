@@ -74,7 +74,12 @@ def upgrade() -> None:
         sa.Column("hashed_password", sa.String(255), nullable=False),
         sa.Column(
             "role",
-            sa.Enum("patient", "doctor", name="user_role", create_type=False),
+            postgresql.ENUM(
+                "patient",
+                "doctor",
+                name="user_role",
+                create_type=False,
+            ),
             nullable=False,
         ),
         sa.Column("full_name", sa.String(255), nullable=True),
@@ -209,7 +214,7 @@ def upgrade() -> None:
         sa.Column("movement_age_delta", sa.Float(), nullable=True),
         sa.Column(
             "interpretation_status",
-            sa.Enum(
+            postgresql.ENUM(
                 "normal",
                 "attention",
                 "concern",
@@ -254,8 +259,10 @@ def upgrade() -> None:
         sa.Column("description", sa.Text(), nullable=False),
         sa.Column(
             "difficulty",
-            sa.Enum(
-                "easy", "medium", "hard",
+            postgresql.ENUM(
+                "easy",
+                "medium",
+                "hard",
                 name="exercise_difficulty",
                 create_type=False,
             ),
