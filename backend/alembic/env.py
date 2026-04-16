@@ -57,8 +57,6 @@ def _load_backend_dotenv() -> None:
     # Always take DATABASE_URL from backend/.env when present. A stale or
     # mis-encoded DATABASE_URL exported in the shell (common on Windows)
     # overrides .env with setdefault() and breaks psycopg2 with UnicodeDecodeError.
-    if "DATABASE_URL" in parsed:
-        os.environ["DATABASE_URL"] = parsed["DATABASE_URL"]
     for key, val in parsed.items():
         if key == "DATABASE_URL":
             continue

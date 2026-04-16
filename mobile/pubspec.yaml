@@ -1,0 +1,11 @@
+name: nmove_mobile_snippets
+description: Shared ApiService for NMove Flutter apps — copy lib/api_service.dart into your app.
+publish_to: 'none'
+version: 0.0.1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  http: ^1.2.0
+  shared_preferences: ^2.3.0
