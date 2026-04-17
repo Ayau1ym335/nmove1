@@ -5,12 +5,14 @@
 #include <SPI.h>
 #include <SD.h>
 #include <MPU9250_asukiaaa.h>
+#include <time.h>
 
 #define SD_CS 5
 #define UPDATE_INTERVAL 8 
 
-const char* ssid = "NMove_Master_Knee"; 
-const char* password = "";               
+const char* ssid = "Ayau"; 
+const char* password = "XYZQWERTY";  
+
 WebServer server(80); 
 MPU9250_asukiaaa mpu;
 
@@ -35,10 +37,45 @@ File logFile;
 unsigned long lastUpdate = 0;
 bool isRecording = false;
 
+// If unix time is less than this, assume NTP did not sync yet.
+// 1600000000 ~= 2020-09-13T12:26:40Z
+const long MIN_UNIX_TIME = 1600000000;
+
+void syncNtpTime() {
+  // Use system timezone offset = 0 (UTC) since backend expects UTC timestamps.
+  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+
+  time_t now = time(nullptr);
+  Serial.print("Syncing NTP");
+  int retries = 0;
+  while (now < MIN_UNIX_TIME && retries < 30) {
+    delay(500);
+    Serial.print(".");
+    now = time(nullptr);
+    retries++;
+  }
+  Serial.println();
+
+  if (now >= MIN_UNIX_TIME) {
+    Serial.print("Unix time: ");
+    Serial.println((long)now);
+  } else {
+    Serial.println("NTP sync failed: time not set");
+  }
+}
+
 // --- ОБРАБОТЧИКИ СЕРВЕРА ---
 
 void handleStart() {
   server.sendHeader("Access-Control-Allow-Origin", "*");
+
+  // Ensure we have a real unix timestamp before we start logging.
+  time_t now = time(nullptr);
+  if (now < MIN_UNIX_TIME) {
+    Serial.println("Time not synced yet; running NTP sync on /start");
+    syncNtpTime();
+  }
+
   SD.remove("/data.bin");
   logFile = SD.open("/data.bin", FILE_WRITE);
   if (logFile) {
@@ -70,7 +107,7 @@ void handleDownload() {
     server.send(400, "text/plain", "STOP_RECORDING_FIRST");
     return;
   }
-  
+
   File file = SD.open("/data.bin", FILE_READ);
   if (!file) {
     server.send(404, "text/plain", "FILE_NOT_FOUND");
@@ -114,10 +151,28 @@ void setup() {
     Serial.println("SD Card OK.");
   }
 
-  // Настройка Wi-Fi
-  WiFi.softAP(ssid, password);
-  Serial.print("AP IP address: ");
-  Serial.println(WiFi.softAPIP()); 
+  // *** ПОДКЛЮЧЕНИЕ К ХОТСПОТУ ТЕЛЕФОНА (вместо softAP) ***
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+
+  Serial.print("Подключаюсь к хотспоту");
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\nПодключено!");
+    Serial.print("IP адрес ESP32: ");
+    Serial.println(WiFi.localIP()); // <-- этот IP вводишь в приложении
+
+    // NTP sync over the phone hotspot connection.
+    syncNtpTime();
+  } else {
+    Serial.println("\nНе удалось подключиться к хотспоту!");
+  }
 
   // Настройка ESP-NOW
   if (esp_now_init() != ESP_OK) {
@@ -129,7 +184,7 @@ void setup() {
   server.on("/start", HTTP_GET, handleStart);
   server.on("/stop", HTTP_GET, handleStop);
   server.on("/download", HTTP_GET, handleDownload);
-  server.on("/download", HTTP_OPTIONS, handleOptions); // Важно для Flutter Web/Chrome
+  server.on("/download", HTTP_OPTIONS, handleOptions);
 
   server.begin();
   Serial.println("HTTP Server started");
@@ -141,8 +196,7 @@ void loop() {
   server.handleClient(); 
 
   unsigned long currentMillis = millis();
-  
-  // Чтение и запись данных каждые 8мс
+ 
   if (currentMillis - lastUpdate >= UPDATE_INTERVAL) {
     lastUpdate = currentMillis;
 
@@ -150,9 +204,9 @@ void loop() {
       mpu.accelUpdate();
       mpu.gyroUpdate();
 
-      currentPacket.timestamp = (double)currentMillis / 1000.0;
+      // Timestamp is unix epoch seconds (UTC) so backend ingestion can validate it.
+      currentPacket.timestamp = (double)time(nullptr);
       
-      // Данные с локального MPU
       currentPacket.acc1[0] = mpu.accelX();
       currentPacket.acc1[1] = mpu.accelY();
       currentPacket.acc1[2] = mpu.accelZ();
@@ -160,7 +214,6 @@ void loop() {
       currentPacket.gyro1[1] = mpu.gyroY();
       currentPacket.gyro1[2] = mpu.gyroZ();
 
-      // Данные со второго датчика (Slave) через ESP-NOW
       currentPacket.acc2[0] = slaveData.acc[0];
       currentPacket.acc2[1] = slaveData.acc[1];
       currentPacket.acc2[2] = slaveData.acc[2];
@@ -168,13 +221,12 @@ void loop() {
       currentPacket.gyro2[1] = slaveData.gyro[1];
       currentPacket.gyro2[2] = slaveData.gyro[2];
 
-      // Запись бинарного пакета
       logFile.write((uint8_t*)&currentPacket, sizeof(currentPacket));
       
-      // Сброс данных на карту раз в секунду, чтобы не потерять при сбое
       if (currentMillis % 1000 < 10) {
         logFile.flush();
       }
     }
   }
 }
+

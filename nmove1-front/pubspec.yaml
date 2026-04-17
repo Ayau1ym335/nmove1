@@ -1,0 +1,35 @@
+name: frontend
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.41.6
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  flutter_radar_chart: ^0.2.0
+  in_app_purchase: ^3.2.0
+  fl_chart: ^0.66.0
+  http: ^1.1.0
+  url_launcher: ^6.3.2
+  flutter_blue_plus: ^2.2.1
+  shared_preferences: ^2.5.4
+  path_provider: ^2.1.5
+  flutter_launcher_icons: ^0.14.4
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/leg.jpeg
+    - assets/logo.png
+    - assets/leg_glow.png

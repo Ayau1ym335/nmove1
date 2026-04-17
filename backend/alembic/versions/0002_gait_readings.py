@@ -105,6 +105,9 @@ def upgrade() -> None:
     # TimescaleDB hypertable                                              #
     # chunk_time_interval=1 hour — sensible for 100 Hz ESP32 streams.    #
     # ------------------------------------------------------------------ #
+    # Enable the extension first (idempotent).
+    op.execute("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;")
+
     op.execute(
         """
         SELECT create_hypertable(
