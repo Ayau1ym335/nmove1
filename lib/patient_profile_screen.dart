@@ -82,9 +82,18 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
 Widget _buildFullOverviewTab(UserData user) {
   final session = user.lastSession;
   
-  // Данные из вашей обновленной модели UserData
   final String currentBioAge = user.biomechanicalAge ?? "—"; 
   final String baselineAge = user.age ?? "—";
+
+final List<double> radarValues = [
+  (session?.symmetryIndex ?? 0) / 100,
+  ((session?.cadence ?? 0) / 180).clamp(0.0, 1.0),
+  ((session?.kneeAngleMax ?? 0) / 170).clamp(0.0, 1.0),
+  ((session?.hipAmplitudeLeft ?? 0) / 90).clamp(0.0, 1.0),
+  0.7, // Stability или заглушка
+];
+
+final List<String> radarLabels = ["Sym", "Cad", "Knee", "Hip", "Stab"];
 
   return SingleChildScrollView(
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -93,24 +102,38 @@ Widget _buildFullOverviewTab(UserData user) {
       children: [
         _buildHeader(user),
         const SizedBox(height: 30),
+        
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ЛЕВАЯ ПОЛОВИНА (Возраст и График)
+            // ЛЕВАЯ ПОЛОВИНА: Возраст, Радар и График
             Expanded(
               flex: 5,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildBiomechanicalAgeHeader(currentBioAge, baselineAge),
-                  const SizedBox(height: 15),
-                  Text(
-                    "Improvement: ${user.getImprovement().toStringAsFixed(1)}%", 
-                    style: const TextStyle(color: neonCyan, fontSize: 14, fontWeight: FontWeight.bold)
-                  ),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 30),
+                  
+SizedBox(
+  width: 350,
+  height: 350,
+  child: CustomPaint(
+    painter: RadarChartPainter(
+      values: radarValues, 
+      labels: radarLabels, 
+    ),
+  ),
+),
+
+                  const SizedBox(height: 40),
+                  
+                  // ЛИНЕЙНЫЙ ГРАФИК ПРОГРЕССА
+                  const Text("Progress History", 
+                    style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 10),
                   SizedBox(
-                    height: 180,
+                    height: 160,
                     child: CustomPaint(
                       painter: NeonLinePainter(
                         data: user.progressData,
@@ -119,43 +142,32 @@ Widget _buildFullOverviewTab(UserData user) {
                       ),
                     ),
                   ),
-                ], // Закрыли Column левой части
+                ],
               ),
-            ), // Закрыли Expanded левой части
+            ),
 
-            const SizedBox(width: 15),
+            const SizedBox(width: 20),
 
-            // ПРАВАЯ ПОЛОВИНА (Карточки метрик)
+            // ПРАВАЯ ПОЛОВИНА: Ключевые метрики
             Expanded(
               flex: 3,
               child: Column(
                 children: [
+                  const SizedBox(height: 10), // Отступ для выравнивания с заголовком слева
                   _metricSmallCard("Symmetry", "${session?.symmetryIndex.toStringAsFixed(0) ?? 0}%", neonCyan),
                   _metricSmallCard("Cadence", "${session?.cadence.toStringAsFixed(0) ?? 0}", Colors.white),
                   _metricSmallCard("Knee Angle", "${session?.kneeAngleMax.toStringAsFixed(0) ?? 0}°", neonCyan),
                   _metricSmallCard("Hip Amp.", "${session?.hipAmplitudeLeft.toStringAsFixed(0) ?? 0}°", Colors.white),
+                  // Добавил пятую карточку для симметрии с радаром
+                  _metricSmallCard("Improvement", "${user.getImprovement().toStringAsFixed(1)}%", neonCyan),
                 ],
               ),
             ),
-          ], // Закрыли Row
+          ],
         ),
         
-        const SizedBox(height: 40),
-        const Text("Hardware Status", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 15),
-        _buildHardwareBlock(upperBattery: 90, lowerBattery: 85, isConnected: session != null),
-        
-        const SizedBox(height: 40),
-        const Text("Movement Radar", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 20),
-        Center(
-          child: SizedBox(
-            width: 220,
-            height: 220,
-            child: CustomPaint(painter: RadarChartPainter()),
-          ),
-        ),
-      ], // Закрыли основной Column
+        // Блок Hardware Status и нижний радар полностью удалены
+      ],
     ),
   );
 }
@@ -267,32 +279,6 @@ Widget _buildBiomechanicalAgeHeader(String current, String baseline) {
     );
   }
 
-  Widget _buildHardwareBlock({required int upperBattery, required int lowerBattery, required bool isConnected}) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: darkCard, borderRadius: BorderRadius.circular(15), border: Border.all(color: isConnected ? neonCyan.withOpacity(0.5) : Colors.white10)),
-      child: Row(children: [
-        _sensorUnit("Upper Sensor", upperBattery, isConnected),
-        Container(width: 1, height: 30, color: Colors.white10, margin: const EdgeInsets.symmetric(horizontal: 10)),
-        _sensorUnit("Lower Sensor", lowerBattery, isConnected),
-      ]),
-    );
-  }
-
-  Widget _sensorUnit(String title, int battery, bool connected) {
-    return Expanded(
-      child: Row(children: [
-        Icon(Icons.wifi, color: connected ? neonCyan : Colors.white24, size: 20),
-        const SizedBox(width: 10),
-        Flexible(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: const TextStyle(color: Colors.white54, fontSize: 9), overflow: TextOverflow.ellipsis),
-            Text(connected ? "$battery% Sync" : "Offline", style: TextStyle(color: connected ? neonCyan : Colors.white24, fontSize: 11, fontWeight: FontWeight.bold)),
-          ]),
-        )
-      ]),
-    );
-  }
 Widget _buildTrendsTab(UserData user) {
   // Подготовка данных (Логика из вашего ActivityProgressPage)
   final List<double> currentData = isWeekSelected 
@@ -316,16 +302,23 @@ Widget _buildTrendsTab(UserData user) {
       ? avgAge 
       : validData.reduce((a, b) => a < b ? a : b);
 
-  return SingleChildScrollView(
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-    child: Column(
-      children: [
-        const Text("Biomechanical Age", style: TextStyle(color: Colors.white70, fontSize: 16)),
-        const SizedBox(height: 20), 
-        
-        _buildPeriodToggle(), 
-        
-        const SizedBox(height: 30),
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+            const Text("NMove", style: TextStyle(color: Colors.cyanAccent, fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            const Text("Activity & Progress", style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 25),
+            
+            _buildPeriodToggle(), 
+            
+            const SizedBox(height: 30),
+            const Text("Biomechanical Age", style: TextStyle(color: Colors.white70, fontSize: 16)),
+            const SizedBox(height: 20), 
 
         Padding(
           padding: const EdgeInsets.only(left: 40, right: 20, bottom: 30), 
@@ -346,7 +339,8 @@ Widget _buildTrendsTab(UserData user) {
         const SizedBox(height: 20),
       ],
     ),
-  );
+  )
+    );
 }
 
 Widget _buildImprovementText(double improvement) {

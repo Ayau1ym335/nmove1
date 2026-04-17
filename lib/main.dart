@@ -1484,6 +1484,19 @@ Widget _buildVerticalHome() {
   }
 
 Widget _buildRadarPage() {
+  final ud = UserDataProvider.of(context)?.userData;
+  final session = ud?.lastSession;
+  
+  final List<double> radarValues = [
+    (session?.symmetryIndex ?? 0) / 100,
+    ((session?.cadence ?? 0) / 180).clamp(0.0, 1.0),
+    ((session?.gvi ?? 0) / 100).clamp(0.0, 1.0), // GVI или другой параметр
+    0.5, // Заглушка, если параметров меньше 5
+    0.5,
+  ];
+
+  final List<String> radarLabels = ["Sym", "Cad", "Stab", "Knee", "Hip"];
+
   return Container(
     color: Colors.black,
     padding: const EdgeInsets.all(20),
@@ -1503,7 +1516,13 @@ Widget _buildRadarPage() {
           padding: const EdgeInsets.symmetric(vertical: 20),
           child: AspectRatio(
             aspectRatio: 1,
-            child: CustomPaint(painter: RadarChartPainter()), // Использует класс рисовальщика
+            child: CustomPaint(
+              // ПЕРЕДАЕМ ПАРАМЕТРЫ СЮДА:
+              painter: RadarChartPainter(
+                values: radarValues,
+                labels: radarLabels,
+              ),
+            ),
           ),
         ),
       ),
