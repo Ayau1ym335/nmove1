@@ -6,6 +6,7 @@ import 'services/api_service.dart';
 import 'main.dart';
 import 'config.dart';
 import 'app_texts.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends StatefulWidget {
   final bool isBluetoothConnected;
@@ -134,15 +135,75 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 12),
               _buildNeonBorderContainer("Data Privacy: Secured\nEncryption: Active", neonPink),
               const SizedBox(height: 35),
-              _buildLogoutButton(),
-              const SizedBox(height: 50),
+const SizedBox(height: 20),
+_buildDownloadReportButton(userData),
+const SizedBox(height: 20),
+_buildLogoutButton(),
             ],
           ),
         ),
       ),
     );
   }
+Widget _buildDownloadReportButton(dynamic userData) {
+  return GestureDetector(
+    onTap: () => _generateAndOpenReport(userData),
+    child: Container(
+      width: double.infinity,
+      height: 55,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15),
+        gradient: LinearGradient(colors: [Colors.redAccent, Colors.deepOrange.shade900]),
+        boxShadow: [
+          BoxShadow(color: Colors.redAccent.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.picture_as_pdf, color: Colors.white, size: 22),
+          SizedBox(width: 10),
+          Text("Download PDF Report", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+        ],
+      ),
+    ),
+  );
+}
 
+Future<void> _generateAndOpenReport(UserData userData) async {
+  try {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Generating report..."), backgroundColor: Colors.redAccent),
+    );
+
+    final result = await ApiService.createDoctorPatientReport(userData.userId);
+    final taskId = result['task_id']?.toString() ?? '';
+    if (taskId.isEmpty) throw Exception('No task ID returned');
+
+    String? pdfUrl;
+    for (int i = 0; i < 20; i++) {
+      await Future.delayed(const Duration(seconds: 3));
+      final status = await ApiService.getDoctorReportStatus(userData.userId, taskId);
+      if (status['status'] == 'completed' || status['url'] != null) {
+        pdfUrl = status['url']?.toString();
+        break;
+      }
+    }
+
+    if (pdfUrl == null) throw Exception('Report generation timed out');
+
+    final uri = Uri.parse(pdfUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error: ${e.toString()}"), backgroundColor: Colors.redAccent),
+    );
+  }
+}
 
   Widget _buildParamGrid(dynamic userData) {
   return Column(

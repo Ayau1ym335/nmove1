@@ -18,7 +18,6 @@ class _RadarDetailPageState extends State<RadarDetailPage> with SingleTickerProv
   // Переменные для Baseline
   String _baselineStatus = "No baseline recorded";
   bool _isRecording = false; 
-  String selectedLeg = "left"; 
   int _seconds = 0;
   Timer? _timer;
   
@@ -92,41 +91,49 @@ final hasData = session.stepCount > 0 || session.cadence > 0;
   }
     
 
-final metrics = [{'L': 'Stance Time (L/R)', 'V': dual(session.stanceTimeLeft, session.stanceTimeRight, 'ms')},
-    {'L': 'Swing Time (L/R)', 'V': dual(session.swingTimeLeft, session.swingTimeRight, 'ms')},
-    {'L': 'Step Time (L/R)', 'V': dual(session.stepTimeLeft, session.stepTimeRight, 'ms')},
-    {'L': 'Stride Time (L/R)', 'V': dual(session.strideTimeLeft, session.strideTimeRight, 'ms')},
-    {'L': 'Double Support', 'V': val(session.doubleSupportTime, 'ms')},
-    {'L': 'Single Support', 'V': val(session.singleSupportTime, 'ms')},
-    {'L': 'Loading Response', 'V': val(session.loadingResponseTime, 'ms')},
-    {'L': 'Pre-Swing Time', 'V': val(session.preSwingTime, 'ms')},
+final metrics = [
+  {'L': 'Step Count', 'V': '${session.stepCount}'},
+  {'L': 'Cadence', 'V': val(session.cadence, 'steps/min')},
+  {'L': 'Avg Speed', 'V': val(session.avgSpeed, 'm/s')},
 
-    // Геометрия и Кинематика (10 параметров)
-    {'L': 'Stride Length', 'V': val(session.strideLength, 'cm')},
-    {'L': 'Step Width', 'V': val(session.stepWidth, 'cm')},
-    {'L': 'Vertical Oscillation', 'V': val(session.verticalOscillation, 'cm')},
-    {'L': 'Knee Amplitude (L/R)', 'V': dual(session.kneeAmplitudeLeft, session.kneeAmplitudeRight, '°')},
-    {'L': 'Hip Amplitude (L/R)', 'V': dual(session.hipAmplitudeLeft, session.hipAmplitudeRight, '°')},
-    {'L': 'Knee Angle Mean/Max', 'V': '${val(session.kneeAngleMean, '°')} / ${val(session.kneeAngleMax, '°')}'},
-    {'L': 'Hip Angle Mean/Min', 'V': '${val(session.hipAngleMean, '°')} / ${val(session.hipAngleMin, '°')}'},
-    {'L': 'Ankle ROM', 'V': val(session.ankleRangeOfMotion, '°')},
-    {'L': 'Trunk Sway', 'V': val(session.trunkSway, '°')},
+  {'L': 'Avg Stance Time', 'V': val(session.avgStanceTime, 'ms')},
+  {'L': 'Avg Swing Time', 'V': val(session.avgSwingTime, 'ms')},
+  {'L': 'Stance/Swing Ratio', 'V': val(session.stanceSwingRatio, '')},
 
-    // Стопа и углы (6 параметров)
-    {'L': 'Foot Strike Angle', 'V': val(session.footStrikeAngle, '°')},
-    {'L': 'Toe Off Angle', 'V': val(session.toeOffAngle, '°')},
-    {'L': 'Avg Roll / Pitch', 'V': '${session.avgRoll.toInt()}° / ${session.avgPitch.toInt()}°'},
-    {'L': 'Avg Yaw', 'V': val(session.avgYaw, '°')},
-    {'L': 'Peak Angular Vel.', 'V': val(session.avgPeakAngularVelocity, '°/s')},
+  {'L': 'Knee Angle Mean', 'V': val(session.kneeAngleMean, '°')},
+  {'L': 'Knee Angle Std', 'V': val(session.kneeAngleStd, '°')},
+  {'L': 'Knee Angle Max', 'V': val(session.kneeAngleMax, '°')},
+  {'L': 'Knee Angle Min', 'V': val(session.kneeAngleMin, '°')},
+  {'L': 'Knee Amplitude', 'V': val(session.kneeAmplitude, '°')},
 
-    // Индексы, Вариабельность и Силы (6 параметров)
-    {'L': 'GVI Index', 'V': val(session.gvi, '%')},
-    {'L': 'Symmetry Index', 'V': val(session.symmetryIndex, '%')},
-    {'L': 'Step Time Var.', 'V': val(session.stepTimeVariability, '%')},
-    {'L': 'Impact Force', 'V': val(session.groundImpactForce, 'N', decimals: 0)},
-    {'L': 'Propulsion Force', 'V': val(session.propulsionForce, 'N', decimals: 0)},
-    {'L': 'Energy Cost', 'V': val(session.energyCost, 'kcal/m', decimals: 2)},
-  ];
+  {'L': 'Hip Angle Mean', 'V': val(session.hipAngleMean, '°')},
+  {'L': 'Hip Angle Std', 'V': val(session.hipAngleStd, '°')},
+  {'L': 'Hip Angle Max', 'V': val(session.hipAngleMax, '°')},
+  {'L': 'Hip Angle Min', 'V': val(session.hipAngleMin, '°')},
+  {'L': 'Hip Amplitude', 'V': val(session.hipAmplitude, '°')},
+
+  {'L': 'Avg Roll', 'V': val(session.avgRoll, '°')},
+  {'L': 'Avg Pitch', 'V': val(session.avgPitch, '°')},
+  {'L': 'Avg Yaw', 'V': val(session.avgYaw, '°')},
+
+  {'L': 'Knee Angle', 'V': val(session.kneeAngle, '°')},
+  {'L': 'Hip Angle', 'V': val(session.hipAngle, '°')},
+  {'L': 'Ankle Angle', 'V': val(session.ankleAngle, '°')},
+
+  {'L': 'GVI Index', 'V': val(session.gvi, '%')},
+  {'L': 'Symmetry Index', 'V': val(session.symmetryIndex, '%')},
+  {'L': 'Step Time Var.', 'V': val(session.stepTimeVariability, '%')},
+  {'L': 'Stride Length Var.', 'V': val(session.stepLengthVariability, '%')},
+  {'L': 'Knee Angle Var.', 'V': val(session.kneeAngleVariability, '%')},
+  {'L': 'Stance Time Var.', 'V': val(session.stanceTimeVariability, '%')},
+
+  {'L': 'Avg GVI', 'V': val(session.avgGvi, '%')},
+  {'L': 'Avg Knee Angle', 'V': val(session.avgKneeAngle, '°')},
+  {'L': 'Avg Hip Angle', 'V': val(session.avgHipAngle, '°')},
+  {'L': 'Cadence vs Baseline', 'V': val(session.cadenceVsBaseline, '%')},
+  {'L': 'GVI vs Baseline', 'V': val(session.gviVsBaseline, '%')},
+  {'L': 'Improvement Score', 'V': val(session.improvementScore, '/100')},
+];
 
 return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
@@ -208,20 +215,11 @@ Widget _buildBaselineScreen(UserData? user) {
             ),
           ),
 
-          const SizedBox(height: 35), // Заменили Spacer на фиксированный отступ
+          const SizedBox(height: 35), 
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _legToggle("left", "LEFT LEG"),
-              const SizedBox(width: 15),
-              _legToggle("right", "RIGHT LEG"),
-            ],
-          ),
+          const SizedBox(height: 50), 
 
-          const SizedBox(height: 50), // Заменили Spacer на фиксированный отступ
 
-          // Графика с анимацией
           Stack(
             alignment: Alignment.center,
             children: [
@@ -271,7 +269,7 @@ Widget _buildBaselineScreen(UserData? user) {
             if (!_isRecording) {
               setState(() {
                 _isRecording = true;
-                _baselineStatus = "Recording $selectedLeg leg...";
+                _baselineStatus = "Recording baseline...";
               });
               _toggleTimer(true);
             } else {
@@ -280,9 +278,8 @@ Widget _buildBaselineScreen(UserData? user) {
               
               try {
                 await ApiService.recordBaseline(
-                  userId: user.userId,
-                  gaitSessionId: "latest", 
-                );
+  userId: user.userId,
+);
                 setState(() => _baselineStatus = "Success! Baseline saved.");
               } catch (e) {
                 setState(() => _baselineStatus = "Connection Error: Check Wi-Fi");
@@ -304,28 +301,7 @@ Widget _buildBaselineScreen(UserData? user) {
   );
 }
 
-Widget _legToggle(String leg, String label) {
-  bool isSelected = selectedLeg == leg;
-  return GestureDetector(
-    onTap: () => setState(() => selectedLeg = leg),
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: isSelected ? Colors.cyanAccent : Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.cyanAccent),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? Colors.black : Colors.cyanAccent,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-      ),
-    ),
-  );
-}
+
 
 Widget _neonButton(String text, VoidCallback onPressed) {
   return Container(

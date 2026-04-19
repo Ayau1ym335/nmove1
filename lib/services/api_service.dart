@@ -616,22 +616,21 @@ static Future<List<dynamic>> getDoctorReportHistory(String patientId) async {
   /// POST /api/baseline/record
   /// Payload: { user_id, gait_session_id }
   /// Backend returns a plain string.
-  static Future<String> recordBaseline({
-    required String userId,
-    required String gaitSessionId,
-  }) async {
-    final headers = await _authHeaders();
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/baseline/record'),
-      headers: headers,
-      body: jsonEncode({'user_id': userId, 'gait_session_id': gaitSessionId}),
-    );
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final decoded = jsonDecode(response.body);
-      return decoded is String ? decoded : decoded.toString();
-    }
-    throw Exception('POST /api/baseline/record failed: ${response.statusCode}');
+static Future<String> recordBaseline({
+  required String userId,
+}) async {
+  final headers = await _authHeaders();
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/baseline/record'),
+    headers: headers,
+    body: jsonEncode({'user_id': userId}),
+  );
+  if (response.statusCode == 200 || response.statusCode == 201) {
+    final decoded = jsonDecode(response.body);
+    return decoded is String ? decoded : decoded.toString();
   }
+  throw Exception('POST /api/baseline/record failed: ${response.statusCode}');
+}
 
   /// GET /api/baseline/{user_id}
   /// Backend returns a plain string. No auth header required per spec.

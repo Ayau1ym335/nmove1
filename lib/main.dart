@@ -1257,6 +1257,7 @@ double _toDouble(dynamic v) {
 Future<void> _loadUserData() async {
   try {
     final data = await ApiService.getMe();
+    debugPrint('getMe response: $data');
     
     if (!mounted) return;
 
@@ -1265,13 +1266,21 @@ Future<void> _loadUserData() async {
       ud.fullName = (data['full_name'] ?? data['name'] ?? ud.fullName).toString();
       ud.email = (data['email'] ?? ud.email).toString();
       ud.userId = (data['id'] ?? ud.userId).toString();
+
+      // ← ДОБАВЬ ЭТО
+      final profile = data['profile'] as Map<String, dynamic>?;
+      if (profile != null) {
+        ud.age = (profile['age'] ?? ud.age).toString();
+        ud.weight = (profile['weight'] ?? ud.weight).toString();
+        ud.height = (profile['height'] ?? ud.height).toString();
+        ud.gender = (profile['gender'] ?? ud.gender).toString();
+      }
       
       final userId = ud.userId;
       if (userId.isNotEmpty) {
         try {
           final summary = await ApiService.getDashboardSummary(userId);
-          
-          if (!mounted) return; // Еще одна проверка перед setState
+          if (!mounted) return;
 
           final movementAgeValue = summary['movement_age']?['movement_age'];
           final movementAge = _toDouble(movementAgeValue);

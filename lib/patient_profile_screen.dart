@@ -90,8 +90,8 @@ final List<double> radarValues = [
   (session?.symmetryIndex ?? 0) / 100,
   ((session?.cadence ?? 0) / 180).clamp(0.0, 1.0),
   ((session?.kneeAngleMax ?? 0) / 170).clamp(0.0, 1.0),
-  ((session?.hipAmplitudeLeft ?? 0) / 90).clamp(0.0, 1.0),
-  0.7, // Stability или заглушка
+  ((session?.hipAmplitude ?? 0) / 90).clamp(0.0, 1.0),
+  ((session?.gvi ?? 0) / 100).clamp(0.0, 1.0),
 ];
 
 final List<String> radarLabels = ["Sym", "Cad", "Knee", "Hip", "Stab"];
@@ -158,7 +158,7 @@ SizedBox(
                   _metricSmallCard("Symmetry", "${session?.symmetryIndex.toStringAsFixed(0) ?? 0}%", neonCyan),
                   _metricSmallCard("Cadence", "${session?.cadence.toStringAsFixed(0) ?? 0}", Colors.white),
                   _metricSmallCard("Knee Angle", "${session?.kneeAngleMax.toStringAsFixed(0) ?? 0}°", neonCyan),
-                  _metricSmallCard("Hip Amp.", "${session?.hipAmplitudeLeft.toStringAsFixed(0) ?? 0}°", Colors.white),
+                  _metricSmallCard("Hip Amp.", "${session?.hipAmplitude.toStringAsFixed(0) ?? 0}°", Colors.white),
                   // Добавил пятую карточку для симметрии с радаром
                   _metricSmallCard("Improvement", "${user.getImprovement().toStringAsFixed(1)}%", neonCyan),
                 ],
