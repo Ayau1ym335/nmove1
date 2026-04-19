@@ -23,11 +23,6 @@ logger = logging.getLogger("nmove.ml.gemini")
 
 CACHE_TTL = 3600   # 1 hour
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Prompt templates
-# ─────────────────────────────────────────────────────────────────────────────
-
 _PATIENT_SYSTEM = (
     "You are NMove, a friendly personal movement coach. "
     "Explain gait analysis results in simple, encouraging language. "
@@ -72,14 +67,9 @@ Session metrics:
 Provide a clinical interpretation. Flag any clinically significant deviations.
 """
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Public API
-# ─────────────────────────────────────────────────────────────────────────────
-
 async def get_gait_insight(
     user_id: UUID,
-    snapshot,           # MetricsSnapshot ORM object
+    snapshot,          
     trend_direction: str | None,
     audience: Literal["patient", "doctor"] = "patient",
 ) -> str:
@@ -90,7 +80,6 @@ async def get_gait_insight(
     """
     cache_key = f"gemini:insight:{user_id}:{snapshot.id}:{audience}"
 
-    # ── 1. Cache check ────────────────────────────────────────────────────────
     cached = await _cache_get(cache_key)
     if cached:
         logger.debug("Gemini cache HIT user=%s audience=%s", user_id, audience)
@@ -98,24 +87,16 @@ async def get_gait_insight(
 
     logger.debug("Gemini cache MISS user=%s audience=%s", user_id, audience)
 
-    # ── 2. Build context dict ─────────────────────────────────────────────────
     ctx = _build_context(user_id, snapshot, trend_direction)
 
-    # ── 3. Call Gemini ────────────────────────────────────────────────────────
     try:
         text = await _call_gemini(ctx, audience)
     except Exception:
         logger.exception("Gemini call failed for user=%s — returning fallback", user_id)
         text = _fallback_message(audience, ctx)
 
-    # ── 4. Cache + return ─────────────────────────────────────────────────────
     await _cache_set(cache_key, text)
     return text
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Internal helpers
-# ─────────────────────────────────────────────────────────────────────────────
 
 def _build_context(user_id: UUID, snapshot, trend_direction: str | None) -> dict:
     def _f(attr: str, default: str = "N/A") -> str:

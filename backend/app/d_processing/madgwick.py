@@ -1,3 +1,4 @@
+""" madwick.py: Madgwick's IMU and AHRS algorithms. """
 import warnings
 import numpy as np
 from numpy.linalg import norm
@@ -111,3 +112,4 @@ class MadgwickAHRS:
         # Integrate to yield quaternion
         q_arr = np.asarray(q) + qdot * self.samplePeriod
         self.quaternion = Quaternion(q_arr / norm(q_arr))  # normalise quaternion
+

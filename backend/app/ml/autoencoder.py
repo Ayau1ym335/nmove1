@@ -35,23 +35,14 @@ from torch.optim.adam import Adam
 
 logger = logging.getLogger("nmove.ml.autoencoder")
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Hyperparameters
-# ─────────────────────────────────────────────────────────────────────────────
-
-INPUT_DIM      = 12      # must match FEATURE_DIM in features.py
-HIDDEN_DIM_1   = 24      # first hidden layer (encoder & decoder)
-HIDDEN_DIM_2   = 12      # second hidden layer
-BOTTLENECK_DIM = 6       # latent representation
+INPUT_DIM      = 12   
+HIDDEN_DIM_1   = 24     
+HIDDEN_DIM_2   = 12    
+BOTTLENECK_DIM = 6       
 
 LR             = 1e-3
 MAX_EPOCHS     = 500
 EARLY_STOP_LOSS = 1e-5
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Model definition
-# ─────────────────────────────────────────────────────────────────────────────
 
 class GaitAutoencoder(nn.Module):
     """Symmetric feedforward autoencoder for gait feature reconstruction.
@@ -90,11 +81,6 @@ class GaitAutoencoder(nn.Module):
         with torch.no_grad():
             recon = self.forward(x)
             return ((recon - x) ** 2).mean(dim=1)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Training
-# ─────────────────────────────────────────────────────────────────────────────
 
 def train_autoencoder(
     X_norm: np.ndarray,
@@ -141,11 +127,6 @@ def train_autoencoder(
     )
     return model, losses
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Serialisation helpers (bytes ↔ MinIO)
-# ─────────────────────────────────────────────────────────────────────────────
-
 def model_to_bytes(model: GaitAutoencoder) -> bytes:
     """Serialise model state_dict to a bytes object (pickle-compatible)."""
     buf = io.BytesIO()
@@ -175,10 +156,6 @@ def scaler_from_bytes(data: bytes) -> np.ndarray:
     buf = io.BytesIO(data)
     return np.load(buf)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Scoring (inference only)
-# ─────────────────────────────────────────────────────────────────────────────
 
 def score_session(
     feature_row: np.ndarray,

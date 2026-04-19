@@ -2,13 +2,13 @@
 #include <esp_now.h>
 #include <Wire.h>
 #include <MPU9250_asukiaaa.h>
-#include <esp_wifi.h>
+#include <esp_wifi.h> // Важно для настройки канала
 
 #define UPDATE_INTERVAL 8 
 
 MPU9250_asukiaaa mpu;
 
-// Структура данных (должна быть такая же как на Мастере)
+// Структура данных (один-в-один как у Мастера)
 typedef struct {
   float acc[3]; 
   float gyro[3];
@@ -16,21 +16,21 @@ typedef struct {
 
 SlaveRawData dataToSend;
 
-// MAC-адрес твоего Мастера (уже вписан твой)
+// MAC-адрес твоего Мастера (уже проверенный)
 uint8_t masterAddress[] = {0xA4, 0xF0, 0x0F, 0x73, 0x92, 0x0C};
 
 unsigned long lastUpdate = 0;
 
-// Исправленный коллбэк для статуса отправки
+// Исправленная функция обратного вызова
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-  // Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Ok" : "Fail");
+  // Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Доставлено" : "Ошибка");
 }
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  // Инициализация I2C (MPU6050)
+  // Инициализация датчика MPU6050/9250
   Wire.begin(21, 22);
   mpu.setWire(&Wire);
   mpu.beginAccel();
@@ -39,42 +39,43 @@ void setup() {
   // Настройка WiFi
   WiFi.mode(WIFI_STA);
   
-  // ВНИМАНИЕ: Если Мастер в мониторе порта напишет Channel, отличный от 1, 
-  // измени эту цифру здесь!
-  int32_t channel = 1; 
+  // --- УСТАНОВКА КАНАЛА (6) ---
+  // Твой Мастер выдал Channel 6, поэтому настраиваем Слейв на него
+  int32_t channel = 6; 
   esp_wifi_set_promiscuous(true);
   esp_wifi_set_channel(channel, WIFI_SECOND_CHAN_NONE);
   esp_wifi_set_promiscuous(false);
+  // ----------------------------
 
   if (esp_now_init() != ESP_OK) {
-    Serial.println("Error ESP-NOW");
+    Serial.println("Ошибка ESP-NOW");
     return;
   }
 
-  // Регистрация коллбэка с приведением типа
+  // Регистрация функции отправки с исправлением типа (cast)
   esp_now_register_send_cb((esp_now_send_cb_t)OnDataSent);
 
-  // Добавляем Мастера в список пиров
+  // Настройка связи с Мастером
   esp_now_peer_info_t peerInfo = {};
   memcpy(peerInfo.peer_addr, masterAddress, 6);
   peerInfo.channel = channel; 
   peerInfo.encrypt = false;
   
   if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-    Serial.println("Peer Error");
+    Serial.println("Ошибка добавления пира");
     return;
   }
 
-  Serial.println("Slave Ready!");
+  Serial.println("Slave готов! Канал связи: 6");
 }
 
 void loop() {
   unsigned long currentMillis = millis();
 
+  // Опрос датчика 125 раз в секунду
   if (currentMillis - lastUpdate >= UPDATE_INTERVAL) {
     lastUpdate = currentMillis;
 
-    // Считываем данные с датчика
     mpu.accelUpdate();
     mpu.gyroUpdate();
 
@@ -86,7 +87,7 @@ void loop() {
     dataToSend.gyro[1] = mpu.gyroY();
     dataToSend.gyro[2] = mpu.gyroZ();
 
-    // Отправляем
+    // Отправка данных Мастеру по ESP-NOW
     esp_now_send(masterAddress, (uint8_t *)&dataToSend, sizeof(dataToSend));
   }
 }
