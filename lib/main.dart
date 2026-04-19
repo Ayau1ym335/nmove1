@@ -1442,12 +1442,6 @@ if (!uploaded) throw Exception('Upload to backend failed.');
         });
       }
     }
-
-  } catch (e) {
-    setState(() {
-      isDeviceConnected = false;
-      ageMessage = 'ERROR: ${e.toString()}';
-    });
   } catch (e) {
     // Показывает реальную ошибку прямо на экране
     setState(() {

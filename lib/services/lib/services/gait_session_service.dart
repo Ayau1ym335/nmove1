@@ -49,34 +49,40 @@ class GaitSessionService {
 
   /// POST /sessions/start — uses query parameters, NOT a JSON body.
   /// Returns the new session_id string, or null on failure.
-  Future<String?> startSessionOnBackend({
-    String legSide = 'left',
-    String? deviceId,
-  }) async {
-    final params = <String, String>{'leg_side': legSide};
-    if (deviceId != null && deviceId.trim().isNotEmpty) {
-      params['device_id'] = deviceId.trim();
-    }
+Future<String?> startSessionOnBackend({
+  String legSide = 'left',
+  String? deviceId,
+}) async {
+  final params = <String, String>{'leg_side': legSide};
+  if (deviceId != null && deviceId.trim().isNotEmpty) {
+    params['device_id'] = deviceId.trim();
+  }
 
-    final uri =
-        Uri.parse('$backendUrl/sessions/start').replace(queryParameters: params);
+  final uri = Uri.parse('$backendUrl/sessions/start')
+      .replace(queryParameters: params);
 
+  try {
     final response = await http.post(
       uri,
       headers: {
-        'ngrok-skip-browser-warning': 'true',
         'Authorization': 'Bearer $authToken',
       },
-    );
+    ).timeout(const Duration(seconds: 15));
+
+    print('=== START SESSION ===');
+    print('Status: ${response.statusCode}');
+    print('Body: ${response.body}');
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      // Backend returns { session_id, started_at }
       return (data['session_id'] ?? data['id'])?.toString();
     }
-    print('Failed to start session on backend: ${response.statusCode} ${response.body}');
+    return null;
+  } catch (e) {
+    print('=== START SESSION EXCEPTION: $e ===');
     return null;
   }
+}
 
   // ---------------------------------------------------------------------------
   // STEP 2: Tell the ESP32 to start recording
