@@ -673,4 +673,46 @@ static Future<String> recordBaseline({
       role: 'patient',
     );
   }
+// --- Patient Report Endpoints ---
+
+// POST /patient/report
+static Future<Map<String, dynamic>> createPatientReport({
+  int days = 30,
+  bool includeCharts = true,
+}) async {
+  final headers = await _authHeaders();
+  final response = await http.post(
+    Uri.parse('$baseUrl/patient/report'),
+    headers: headers,
+    body: jsonEncode({'days': days, 'include_charts': includeCharts}),
+  );
+  if (response.statusCode == 202 || response.statusCode == 200) {
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+  throw Exception('POST /patient/report failed: ${response.statusCode} ${response.body}');
+}
+
+// GET /patient/report/status/{task_id}
+static Future<Map<String, dynamic>> getPatientReportStatus(String taskId) async {
+  final headers = await _authHeadersPlain();
+  final response = await http.get(
+    Uri.parse('$baseUrl/patient/report/status/$taskId'),
+    headers: headers,
+  );
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+  throw Exception('GET /patient/report/status failed: ${response.statusCode}');
+}
+
+// GET /patient/report/history
+static Future<List<dynamic>> getPatientReportHistory() async {
+  final headers = await _authHeadersPlain();
+  final response = await http.get(
+    Uri.parse('$baseUrl/patient/report/history'),
+    headers: headers,
+  );
+  if (response.statusCode == 200) return jsonDecode(response.body) as List<dynamic>;
+  return [];
+}
 }

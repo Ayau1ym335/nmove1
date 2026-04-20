@@ -13,7 +13,8 @@ class KneeSensorService {
 
   // Notifier to update the UI in real-time without calling setState.
   final ValueNotifier<String> sensorDataNotifier = ValueNotifier("Waiting for data...");
-
+double masterBattery = 100.0;
+  double slaveBattery = 100.0;
   /// Establishes connection to the ESP32 WebSocket server.
   void connect() {
     try {
@@ -58,15 +59,18 @@ class KneeSensorService {
       
       // Parse Master (Thigh) data - removing "M:" prefix.
       String masterClean = parts[0].replaceAll('M:', '');
-      List<double> masterAcc = masterClean.split(',').map((e) => double.tryParse(e.trim()) ?? 0.0).toList();
-      
+      List<double> masterValues = masterClean.split(',').map((e) => double.tryParse(e.trim()) ?? 0.0).toList();
+      masterBattery = masterValues.length > 3 ? masterValues[3] : 99.0;
       // Parse Slave (Shank) data - removing "S:" prefix.
       String slaveClean = parts[1].replaceAll('S:', '');
-      List<double> slaveAcc = slaveClean.split(',').map((e) => double.tryParse(e.trim()) ?? 0.0).toList();
+      List<double> slaveValues = slaveClean.split(',').map((e) => double.tryParse(e.trim()) ?? 0.0).toList();
+slaveBattery = slaveValues.length > 3 ? slaveValues[3] : 98.0;
 
+      // Для отладки в консоли
+      debugPrint("Master Battery: $masterBattery%, Slave Battery: $slaveBattery%");
       // Debug output for calculations.
-      debugPrint("Thigh Accel: $masterAcc");
-      debugPrint("Shank Accel: $slaveAcc");
+      debugPrint("Thigh Accel: $masterValues");
+      debugPrint("Shank Accel: $slaveValues");
       
       // TODO: Integrate Madgwick Filter here.
       // madgwickFilter.update(masterAcc, slaveAcc);

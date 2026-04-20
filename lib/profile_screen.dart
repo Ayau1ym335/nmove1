@@ -7,6 +7,7 @@ import 'main.dart';
 import 'config.dart';
 import 'app_texts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'services/sensor_stream_service.dart'; 
 
 class ProfileScreen extends StatefulWidget {
   final bool isBluetoothConnected;
@@ -27,6 +28,8 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final Color neonCyan = const Color(0xFF00E5FF);
   final Color neonPink = const Color(0xFFFF007F);
+
+final KneeSensorService sensorService = KneeSensorService();
 
   @override
   Widget build(BuildContext context) {
@@ -176,16 +179,17 @@ Future<void> _generateAndOpenReport(UserData userData) async {
       const SnackBar(content: Text("Generating report..."), backgroundColor: Colors.redAccent),
     );
 
-    final result = await ApiService.createDoctorPatientReport(userData.userId);
+    final result = await ApiService.createPatientReport();
     final taskId = result['task_id']?.toString() ?? '';
     if (taskId.isEmpty) throw Exception('No task ID returned');
 
+    // Polling статуса
     String? pdfUrl;
     for (int i = 0; i < 20; i++) {
       await Future.delayed(const Duration(seconds: 3));
-      final status = await ApiService.getDoctorReportStatus(userData.userId, taskId);
-      if (status['status'] == 'completed' || status['url'] != null) {
-        pdfUrl = status['url']?.toString();
+      final status = await ApiService.getPatientReportStatus(taskId);
+      if (status['url'] != null) {
+        pdfUrl = status['url'].toString();
         break;
       }
     }
@@ -200,7 +204,7 @@ Future<void> _generateAndOpenReport(UserData userData) async {
   } catch (e) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Error: ${e.toString()}"), backgroundColor: Colors.redAccent),
+      SnackBar(content: Text("Error: $e"), backgroundColor: Colors.redAccent),
     );
   }
 }
@@ -256,23 +260,41 @@ Future<void> _generateAndOpenReport(UserData userData) async {
     );
   }
 
-  Widget _buildHardwareBlock() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: neonCyan, width: 2),
-      ),
-      child: IntrinsicHeight(
-        child: Row(
-          children: [
-            _sensorInfo("Upper Leg Sensor", widget.upperBattery, widget.isBluetoothConnected),
-            VerticalDivider(color: neonCyan, thickness: 1, width: 1, indent: 15, endIndent: 15),
-            _sensorInfo("Lower Leg Sensor", widget.lowerBattery, widget.isBluetoothConnected),
-          ],
+Widget _buildHardwareBlock() {
+  // ValueListenableBuilder "слушает" sensorDataNotifier.
+  // Как только пришла строка данных, он перестраивает то, что внутри.
+  return ValueListenableBuilder<String>(
+    valueListenable: sensorService.sensorDataNotifier,
+    builder: (context, rawData, child) {
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: neonCyan, width: 2),
         ),
-      ),
-    );
-  }
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              // Данные для Мастера (Бедро)
+              _sensorInfo(
+                "Master Sensor",
+                sensorService.masterBattery.toInt(),
+                sensorService.isConnected,
+              ),
+              // Вертикальный разделитель посередине
+              VerticalDivider(color: neonCyan.withOpacity(0.3), thickness: 1, indent: 10, endIndent: 10),
+              // Данные для Слейва (Голень)
+              _sensorInfo(
+                "Slave Sensor",
+                sensorService.slaveBattery.toInt(),
+                sensorService.isConnected,
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 
   Widget _sensorInfo(String label, int battery, bool connected) {
     return Expanded(
